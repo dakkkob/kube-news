@@ -23,8 +23,12 @@ def _parse_date(entry: dict[str, Any]) -> str:
         if parsed:
             try:
                 dt = datetime(
-                    int(parsed[0]), int(parsed[1]), int(parsed[2]),
-                    int(parsed[3]), int(parsed[4]), int(parsed[5]),
+                    int(parsed[0]),
+                    int(parsed[1]),
+                    int(parsed[2]),
+                    int(parsed[3]),
+                    int(parsed[4]),
+                    int(parsed[5]),
                     tzinfo=UTC,
                 )
                 return dt.isoformat()
