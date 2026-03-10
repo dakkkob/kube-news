@@ -1,0 +1,123 @@
+# kube-news data source configuration
+# Adding a new GitHub repo = one line under github_repos
+# Adding a new RSS feed = one line under rss_feeds
+
+github_repos:
+  # Tier 1 — Core Kubernetes
+  - owner: kubernetes
+    repo: kubernetes
+    schedule: daily
+    description: "Kubernetes core releases and changelogs"
+
+  - owner: kubernetes
+    repo: enhancements
+    schedule: weekly
+    content_type: keps  # Special handling: browse KEP markdown files
+    description: "KEPs — deprecation source of truth"
+
+  # Tier 2 — CNCF Ecosystem
+  - owner: kyverno
+    repo: kyverno
+    schedule: daily
+    description: "Policy engine — CEL migration, non-CEL deprecation"
+
+  - owner: helm
+    repo: helm
+    schedule: daily
+    description: "Helm package manager releases"
+
+  - owner: istio
+    repo: istio
+    schedule: daily
+    description: "Service mesh releases and API changes"
+
+  - owner: cert-manager
+    repo: cert-manager
+    schedule: daily
+    description: "Certificate management — API changes"
+
+  - owner: argoproj
+    repo: argo-cd
+    schedule: daily
+    description: "GitOps — workflow and API changes"
+
+  - owner: cilium
+    repo: cilium
+    schedule: daily
+    description: "CNI/eBPF networking updates"
+
+  - owner: kubernetes-sigs
+    repo: gateway-api
+    schedule: daily
+    description: "Ingress replacement — channel graduations"
+
+  - owner: open-policy-agent
+    repo: gatekeeper
+    schedule: daily
+    description: "Policy engine — compare with Kyverno"
+
+  - owner: crossplane
+    repo: crossplane
+    schedule: daily
+    description: "Infrastructure-as-code on K8s"
+
+rss_feeds:
+  # Tier 1 — Core
+  - url: "https://kubernetes.io/feed.xml"
+    name: kubernetes-blog
+    schedule: every_6h
+    description: "Official K8s blog — announcements, migration guides"
+
+  - url: "https://lwkd.info/feed.xml"
+    name: lwkd
+    schedule: daily
+    description: "Last Week in Kubernetes Development"
+
+  # Tier 2 — Ecosystem blogs
+  - url: "https://istio.io/latest/news/feed.xml"
+    name: istio-news
+    schedule: daily
+    description: "Istio-specific advisories and releases"
+
+  - url: "https://kyverno.io/blog/index.xml"
+    name: kyverno-blog
+    schedule: weekly
+    description: "Kyverno blog — CEL migration guides"
+
+  # Tier 3 — Aggregators
+  - url: "https://www.cncf.io/feed/?post_type=lf_kubeweekly"
+    name: kubeweekly
+    schedule: weekly
+    description: "KubeWeekly curated roundup"
+
+  - url: "https://www.cncf.io/feed/"
+    name: cncf-blog
+    schedule: daily
+    description: "CNCF project announcements, graduations"
+
+cve_feeds:
+  - url: "https://kubernetes.io/docs/reference/issues-security/official-cve-feed/index.json"
+    name: kubernetes-cve
+    schedule: every_6h
+    description: "Official K8s CVE feed — no auth needed"
+
+endoflife_products:
+  - product: kubernetes
+    schedule: daily
+  - product: cilium
+    schedule: daily
+  - product: argo-cd
+    schedule: daily
+  - product: amazon-eks
+    schedule: daily
+  - product: google-kubernetes-engine
+    schedule: daily
+
+artifact_hub:
+  search_url: "https://artifacthub.io/api/v1/packages/search"
+  params:
+    kind: 0  # Helm charts
+    sort: stars
+    limit: 50
+  schedule: daily
+  description: "Top Helm chart version updates"

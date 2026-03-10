@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Lint with ruff
+        run: |
+          ruff check src/ flows/ tests/
+          ruff format --check src/ flows/ tests/
+
+      - name: Type check with mypy
+        run: mypy src/
+
+      - name: Run tests
+        run: pytest tests/unit/ -v
+
+  terraform-validate:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'infra') || contains(join(github.event.commits.*.modified, ','), 'infra/')
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform fmt
+        run: terraform fmt -check
+
+      - name: Terraform validate
+        run: |
+          terraform init -backend=false
+          terraform validate

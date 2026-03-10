@@ -1,0 +1,118 @@
+"""DynamoDB client for metadata storage and deduplication."""
+
+from __future__ import annotations
+
+import logging
+from datetime import UTC, datetime
+from typing import Any
+
+import boto3
+from boto3.dynamodb.conditions import Attr, Key
+
+from src.config import AWS_REGION, DYNAMODB_TABLE
+
+logger = logging.getLogger(__name__)
+
+
+def _get_table() -> Any:
+    dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+    return dynamodb.Table(DYNAMODB_TABLE)
+
+
+def item_exists(item_id: str) -> bool:
+    """Check if an item already exists in DynamoDB (dedup check)."""
+    table = _get_table()
+    response = table.get_item(
+        Key={"item_id": item_id},
+        ProjectionExpression="item_id",
+    )
+    return "Item" in response
+
+
+def save_metadata(item: dict[str, Any], s3_key: str = "") -> None:
+    """Save item metadata to DynamoDB.
+
+    Stores structured metadata (not full text) for querying.
+    Full text lives in S3.
+    """
+    table = _get_table()
+
+    db_item: dict[str, Any] = {
+        "item_id": item["item_id"],
+        "source": item.get("source", "unknown"),
+        "source_type": item.get("source_type", "unknown"),
+        "title": item.get("title", ""),
+        "url": item.get("url", ""),
+        "published_at": item.get("published_at", ""),
+        "fetched_at": item.get("fetched_at", datetime.now(UTC).isoformat()),
+        "s3_key": s3_key,
+        # Classification fields (populated in Phase 2)
+        "label": item.get("label", ""),
+        "confidence": str(item.get("confidence", "")),
+        "is_deprecation": item.get("is_deprecation", False),
+        "is_security": item.get("is_security", False),
+    }
+
+    # Add source-specific fields
+    if item.get("cve_id"):
+        db_item["cve_id"] = item["cve_id"]
+    if item.get("tag"):
+        db_item["tag"] = item["tag"]
+    if item.get("cycle"):
+        db_item["cycle"] = item["cycle"]
+    if item.get("is_eol") is not None:
+        db_item["is_eol"] = item["is_eol"]
+    if item.get("eol_date"):
+        db_item["eol_date"] = item["eol_date"]
+
+    table.put_item(Item=db_item)
+    logger.debug("Saved metadata for item %s", item["item_id"])
+
+
+def query_by_source(source: str, limit: int = 100) -> list[dict[str, Any]]:
+    """Query items by source."""
+    table = _get_table()
+    response = table.query(
+        IndexName="source-published_at-index",
+        KeyConditionExpression=Key("source").eq(source),
+        ScanIndexForward=False,
+        Limit=limit,
+    )
+    return response.get("Items", [])
+
+
+def query_deprecations(limit: int = 50) -> list[dict[str, Any]]:
+    """Query items flagged as deprecations, sorted by date."""
+    table = _get_table()
+    response = table.scan(
+        FilterExpression=Attr("is_deprecation").eq(True),
+        Limit=limit,
+    )
+    items = response.get("Items", [])
+    items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
+    return items
+
+
+def query_security(limit: int = 50) -> list[dict[str, Any]]:
+    """Query items flagged as security issues."""
+    table = _get_table()
+    response = table.scan(
+        FilterExpression=Attr("is_security").eq(True),
+        Limit=limit,
+    )
+    items = response.get("Items", [])
+    items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
+    return items
+
+
+def query_recent(days: int = 30, limit: int = 100) -> list[dict[str, Any]]:
+    """Query recently ingested items."""
+    table = _get_table()
+    cutoff = datetime.now(UTC).isoformat()
+    response = table.scan(
+        FilterExpression=Attr("fetched_at").lte(cutoff),
+        Limit=limit,
+    )
+    items = response.get("Items", [])
+    items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
+    return items
