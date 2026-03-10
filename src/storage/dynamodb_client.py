@@ -78,7 +78,8 @@ def query_by_source(source: str, limit: int = 100) -> list[dict[str, Any]]:
         ScanIndexForward=False,
         Limit=limit,
     )
-    return response.get("Items", [])
+    result: list[dict[str, Any]] = response.get("Items", [])
+    return result
 
 
 def query_deprecations(limit: int = 50) -> list[dict[str, Any]]:
@@ -88,7 +89,7 @@ def query_deprecations(limit: int = 50) -> list[dict[str, Any]]:
         FilterExpression=Attr("is_deprecation").eq(True),
         Limit=limit,
     )
-    items = response.get("Items", [])
+    items: list[dict[str, Any]] = response.get("Items", [])
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
     return items
 
@@ -100,7 +101,7 @@ def query_security(limit: int = 50) -> list[dict[str, Any]]:
         FilterExpression=Attr("is_security").eq(True),
         Limit=limit,
     )
-    items = response.get("Items", [])
+    items: list[dict[str, Any]] = response.get("Items", [])
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
     return items
 
@@ -113,6 +114,6 @@ def query_recent(days: int = 30, limit: int = 100) -> list[dict[str, Any]]:
         FilterExpression=Attr("fetched_at").lte(cutoff),
         Limit=limit,
     )
-    items = response.get("Items", [])
+    items: list[dict[str, Any]] = response.get("Items", [])
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
     return items

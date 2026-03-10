@@ -30,7 +30,7 @@ def fetch_top_charts(
     kind=0 means Helm charts.
     """
     url = f"{BASE_URL}/packages/search"
-    params = {
+    params: dict[str, str | int] = {
         "kind": kind,
         "sort": sort,
         "limit": limit,

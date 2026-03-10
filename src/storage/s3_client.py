@@ -69,4 +69,5 @@ def get_item(key: str, bucket: str = S3_BUCKET) -> dict[str, Any]:
     client = _get_client()
     response = client.get_object(Bucket=bucket, Key=key)
     body = response["Body"].read().decode("utf-8")
-    return json.loads(body)
+    result: dict[str, Any] = json.loads(body)
+    return result

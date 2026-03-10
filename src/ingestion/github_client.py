@@ -68,7 +68,7 @@ def fetch_keps(owner: str = "kubernetes", repo: str = "enhancements") -> list[di
     Browses the keps/ directory tree and fetches kep.yaml files for metadata.
     """
     url = f"{BASE_URL}/repos/{owner}/{repo}/git/trees/master"
-    items = []
+    items: list[dict[str, Any]] = []
 
     with httpx.Client(timeout=TIMEOUT, headers=_headers()) as client:
         # Get the top-level tree

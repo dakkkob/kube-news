@@ -50,6 +50,12 @@ gh repo create kube-news --public --source=. --push
    # Enter: Access Key ID, Secret Access Key, Region (eu-west-1), Output (json)
    ```
 
+> **Note:** AWS now recommends `aws login` via IAM Identity Center (SSO) instead of
+> access keys. That's the right call for teams/orgs, but requires setting up AWS
+> Organizations + Identity Center — overkill for a solo free-tier project. Our access
+> key is only used locally. In production, EC2 uses an IAM instance profile (no keys)
+> and CI uses GitHub OIDC (no keys).
+
 ### Prefect Cloud (free tier)
 
 1. Sign up at https://app.prefect.cloud/ (GitHub SSO works)

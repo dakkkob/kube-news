@@ -22,7 +22,11 @@ def _parse_date(entry: dict[str, Any]) -> str:
         parsed = entry.get(field)
         if parsed:
             try:
-                dt = datetime(*parsed[:6], tzinfo=UTC)
+                dt = datetime(
+                    int(parsed[0]), int(parsed[1]), int(parsed[2]),
+                    int(parsed[3]), int(parsed[4]), int(parsed[5]),
+                    tzinfo=UTC,
+                )
                 return dt.isoformat()
             except (TypeError, ValueError):
                 continue
@@ -30,7 +34,7 @@ def _parse_date(entry: dict[str, Any]) -> str:
     for field in ("published", "updated"):
         value = entry.get(field)
         if value:
-            return value
+            return str(value)
 
     return datetime.now(UTC).isoformat()
 
