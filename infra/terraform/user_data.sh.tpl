@@ -53,7 +53,7 @@ Type=simple
 User=kubenews
 WorkingDirectory=/home/kubenews/app
 EnvironmentFile=/home/kubenews/app/.env
-ExecStart=/home/kubenews/app/.venv/bin/python -m flows.serve_all
+ExecStart=/home/kubenews/app/.venv/bin/python /home/kubenews/app/flows/serve_all.py
 Restart=always
 RestartSec=10
 
