@@ -47,7 +47,7 @@ gh repo create kube-news --public --source=. --push
 4. Configure locally:
    ```bash
    aws configure
-   # Enter: Access Key ID, Secret Access Key, Region (eu-west-1), Output (json)
+   # Enter: Access Key ID, Secret Access Key, Region (eu-north-1), Output (json)
    ```
 
 > **Note:** AWS now recommends `aws login` via IAM Identity Center (SSO) instead of

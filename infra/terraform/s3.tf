@@ -16,6 +16,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "raw" {
     id     = "archive-old-data"
     status = "Enabled"
 
+    filter {}
+
     transition {
       days          = 180
       storage_class = "GLACIER_IR"

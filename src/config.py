@@ -70,6 +70,6 @@ def load_sources_config(config_path: str | Path | None = None) -> SourcesConfig:
 # Common settings
 S3_BUCKET = os.environ.get("S3_BUCKET", "kube-news-raw")
 DYNAMODB_TABLE = os.environ.get("DYNAMODB_TABLE", "kube-news")
-AWS_REGION = os.environ.get("AWS_REGION", "eu-west-1")
+AWS_REGION = os.environ.get("AWS_REGION", "eu-north-1")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 HF_API_TOKEN = os.environ.get("HF_API_TOKEN", "")
