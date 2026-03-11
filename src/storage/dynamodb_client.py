@@ -49,8 +49,8 @@ def save_metadata(item: dict[str, Any], s3_key: str = "") -> None:
         # Classification fields (populated in Phase 2)
         "label": item.get("label", ""),
         "confidence": str(item.get("confidence", "")),
-        "is_deprecation": item.get("is_deprecation", False),
-        "is_security": item.get("is_security", False),
+        "is_deprecation": str(item.get("is_deprecation", False)).lower(),
+        "is_security": str(item.get("is_security", False)).lower(),
     }
 
     # Add source-specific fields
@@ -86,7 +86,7 @@ def query_deprecations(limit: int = 50) -> list[dict[str, Any]]:
     """Query items flagged as deprecations, sorted by date."""
     table = _get_table()
     response = table.scan(
-        FilterExpression=Attr("is_deprecation").eq(True),
+        FilterExpression=Attr("is_deprecation").eq("true"),
         Limit=limit,
     )
     items: list[dict[str, Any]] = response.get("Items", [])
@@ -98,7 +98,7 @@ def query_security(limit: int = 50) -> list[dict[str, Any]]:
     """Query items flagged as security issues."""
     table = _get_table()
     response = table.scan(
-        FilterExpression=Attr("is_security").eq(True),
+        FilterExpression=Attr("is_security").eq("true"),
         Limit=limit,
     )
     items: list[dict[str, Any]] = response.get("Items", [])
