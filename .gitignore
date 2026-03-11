@@ -33,6 +33,7 @@ infra/terraform/*.tfstate
 infra/terraform/*.tfstate.backup
 infra/terraform/*.tfplan
 infra/terraform/.terraform.lock.hcl
+infra/terraform/terraform.tfvars
 
 # MLflow
 mlruns/

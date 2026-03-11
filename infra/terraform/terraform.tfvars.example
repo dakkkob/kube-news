@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars and fill in your values
+# terraform.tfvars is in .gitignore — never committed
+
+prefect_api_url = "https://api.prefect.cloud/api/accounts/YOUR_ACCOUNT/workspaces/YOUR_WORKSPACE"
+prefect_api_key = "pnu_your_key_here"
+github_token    = "ghp_your_token_here"
+
+# Uncomment if you want GitHub Actions OIDC
+# github_org = "your-github-username"

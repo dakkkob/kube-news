@@ -21,3 +21,22 @@ variable "github_repo" {
   type        = string
   default     = "kube-news"
 }
+
+# EC2 / Prefect worker
+variable "prefect_api_url" {
+  description = "Prefect Cloud API URL"
+  type        = string
+  sensitive   = true
+}
+
+variable "prefect_api_key" {
+  description = "Prefect Cloud API key"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_token" {
+  description = "GitHub PAT for higher API rate limits"
+  type        = string
+  sensitive   = true
+}

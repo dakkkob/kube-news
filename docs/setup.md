@@ -127,19 +127,25 @@ pytest -v
 ```bash
 cd infra/terraform
 
+# Create terraform.tfvars from the example
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your Prefect and GitHub credentials
+
 # Initialize Terraform
 terraform init
 
 # Preview what will be created
 terraform plan
 
-# Deploy (creates S3 bucket, DynamoDB table, IAM roles)
+# Deploy (creates S3, DynamoDB, EC2, IAM)
 terraform apply
 ```
 
 This creates:
 - S3 bucket: `kube-news-raw` (stores raw JSON items)
 - DynamoDB table: `kube-news` (metadata + dedup)
+- EC2 t2.micro: Prefect worker (auto-starts via systemd)
+- IAM instance profile: EC2 accesses S3/DynamoDB without access keys
 - IAM role for GitHub Actions OIDC (no long-lived keys in CI)
 
 ---
@@ -167,24 +173,38 @@ print(f'Got {len(items)} CVEs')
 
 ---
 
-## 7. Set up Prefect worker (later, on EC2)
-
-Once AWS infra is deployed:
+## 7. Deploy Prefect flows
 
 ```bash
-# SSH into your EC2 instance
-ssh -i your-key.pem ec2-user@your-ec2-ip
+# Create the work pool in Prefect Cloud first
+prefect work-pool create kube-news-pool --type process
 
-# Install deps, clone repo, set up .env (same as step 3)
-
-# Start the Prefect worker
-prefect worker start --pool "kube-news-pool" --type process
+# Deploy all 4 flows (reads prefect.yaml)
+prefect deploy --all
 ```
 
-Then deploy flows from your local machine:
+This registers the flows with Prefect Cloud on their schedules:
+- `ingest-github-releases` — daily at 06:00 UTC
+- `ingest-rss-feeds` — daily at 07:00 UTC
+- `ingest-k8s-cves` — every 6 hours
+- `ingest-endoflife` — daily at 08:00 UTC
+
+---
+
+## 8. Connect to EC2 (if needed)
+
+The EC2 instance auto-starts the Prefect worker via user data script. No SSH key needed — use SSM Session Manager:
 
 ```bash
-prefect deploy --all
+# Connect via AWS CLI (requires Session Manager plugin)
+# Install: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+aws ssm start-session --target INSTANCE_ID --region eu-north-1
+
+# Check the worker is running
+sudo systemctl status prefect-worker
+
+# View setup logs
+sudo cat /var/log/kube-news-setup.log
 ```
 
 ---
