@@ -1,0 +1,36 @@
+# Prefect deployment configuration
+# Deploy all flows: prefect deploy --all
+# Deploy one: prefect deploy -n ingest-github-releases/daily
+
+deployments:
+  - name: daily
+    entrypoint: flows/ingest_github.py:ingest_github_releases
+    work_pool:
+      name: kube-news-pool
+    schedule:
+      cron: "0 6 * * *"  # Daily at 06:00 UTC
+    description: "Ingest releases from all configured GitHub repos"
+
+  - name: daily
+    entrypoint: flows/ingest_rss.py:ingest_rss_feeds
+    work_pool:
+      name: kube-news-pool
+    schedule:
+      cron: "0 7 * * *"  # Daily at 07:00 UTC
+    description: "Ingest all configured RSS feeds"
+
+  - name: every-6h
+    entrypoint: flows/ingest_cves.py:ingest_k8s_cves
+    work_pool:
+      name: kube-news-pool
+    schedule:
+      cron: "0 */6 * * *"  # Every 6 hours
+    description: "Ingest Kubernetes CVE feed"
+
+  - name: daily
+    entrypoint: flows/ingest_eol.py:ingest_endoflife
+    work_pool:
+      name: kube-news-pool
+    schedule:
+      cron: "0 8 * * *"  # Daily at 08:00 UTC
+    description: "Ingest end-of-life data for tracked products"
