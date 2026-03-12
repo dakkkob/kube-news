@@ -60,3 +60,6 @@ htmlcov/
 
 # ruff
 .ruff_cache/
+
+# User Defined
+TODO

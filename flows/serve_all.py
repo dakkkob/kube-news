@@ -24,7 +24,7 @@ if __name__ == "__main__":
     )
     cve_deploy = ingest_k8s_cves.to_deployment(
         name="ingest-k8s-cves",
-        cron="0 */6 * * *",
+        cron="0 9 * * *",
     )
     eol_deploy = ingest_endoflife.to_deployment(
         name="ingest-endoflife",

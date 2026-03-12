@@ -43,8 +43,8 @@ def save_metadata(item: dict[str, Any], s3_key: str = "") -> None:
         "source_type": item.get("source_type", "unknown"),
         "title": item.get("title", ""),
         "url": item.get("url", ""),
-        "published_at": item.get("published_at", ""),
-        "fetched_at": item.get("fetched_at", datetime.now(UTC).isoformat()),
+        "published_at": item.get("published_at") or datetime.now(UTC).isoformat(),
+        "fetched_at": item.get("fetched_at") or datetime.now(UTC).isoformat(),
         "s3_key": s3_key,
         # Classification fields (populated in Phase 2)
         "label": item.get("label", ""),
