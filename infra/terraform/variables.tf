@@ -40,3 +40,25 @@ variable "github_token" {
   type        = string
   sensitive   = true
 }
+
+# Phase 2 — Processing
+variable "hf_api_token" {
+  description = "HuggingFace API token for zero-shot classification"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "qdrant_url" {
+  description = "Qdrant Cloud cluster URL"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "qdrant_api_key" {
+  description = "Qdrant Cloud API key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

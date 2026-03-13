@@ -6,6 +6,13 @@ exec > /var/log/kube-news-setup.log 2>&1
 
 echo "=== kube-news worker setup ==="
 
+# Add 2GB swap — t3.micro has only 1GB RAM, pip needs more for large wheels
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
 # Install Python 3.11 and git
 dnf install -y python3.11 python3.11-pip git
 
@@ -27,6 +34,9 @@ DYNAMODB_TABLE=${dynamodb_table}
 GITHUB_TOKEN=${github_token}
 PREFECT_API_URL=${prefect_api_url}
 PREFECT_API_KEY=${prefect_api_key}
+HF_API_TOKEN=${hf_api_token}
+QDRANT_URL=${qdrant_url}
+QDRANT_API_KEY=${qdrant_api_key}
 ENVEOF
 
 chown kubenews:kubenews /home/kubenews/app/.env
@@ -38,7 +48,8 @@ su - kubenews -c "
   python3.11 -m venv .venv
   source .venv/bin/activate
   pip install --upgrade pip
-  pip install -e .
+  pip install torch --index-url https://download.pytorch.org/whl/cpu
+  pip install -e '.[ml]'
 "
 
 # Create systemd service for Prefect worker
