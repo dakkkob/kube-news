@@ -12,6 +12,7 @@ from flows.ingest_cves import ingest_k8s_cves  # noqa: E402
 from flows.ingest_eol import ingest_endoflife  # noqa: E402
 from flows.ingest_github import ingest_github_releases  # noqa: E402
 from flows.ingest_rss import ingest_rss_feeds  # noqa: E402
+from flows.process_and_embed import process_and_embed  # noqa: E402
 
 if __name__ == "__main__":
     github_deploy = ingest_github_releases.to_deployment(
@@ -31,4 +32,9 @@ if __name__ == "__main__":
         cron="0 8 * * *",
     )
 
-    serve(github_deploy, rss_deploy, cve_deploy, eol_deploy)
+    process_deploy = process_and_embed.to_deployment(
+        name="process-and-embed",
+        cron="0 10 * * *",  # Run after all ingestion flows complete
+    )
+
+    serve(github_deploy, rss_deploy, cve_deploy, eol_deploy, process_deploy)

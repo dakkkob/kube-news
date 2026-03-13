@@ -106,6 +106,49 @@ def query_security(limit: int = 50) -> list[dict[str, Any]]:
     return items
 
 
+def query_unprocessed(limit: int = 100) -> list[dict[str, Any]]:
+    """Query items that haven't been classified yet (label is empty)."""
+    table = _get_table()
+    response = table.scan(
+        FilterExpression=Attr("label").eq("") | Attr("label").not_exists(),
+        Limit=limit,
+    )
+    items: list[dict[str, Any]] = response.get("Items", [])
+    return items
+
+
+def update_processing_results(
+    item_id: str,
+    label: str,
+    confidence: float,
+    is_deprecation: bool,
+    is_security: bool,
+    entities: dict[str, Any] | None = None,
+) -> None:
+    """Update an item with classification and entity extraction results."""
+    table = _get_table()
+    update_expr = "SET #lbl = :label, confidence = :conf, is_deprecation = :dep, is_security = :sec"
+    expr_values: dict[str, Any] = {
+        ":label": label,
+        ":conf": str(round(confidence, 4)),
+        ":dep": str(is_deprecation).lower(),
+        ":sec": str(is_security).lower(),
+    }
+    expr_names = {"#lbl": "label"}
+
+    if entities:
+        update_expr += ", entities = :ent"
+        expr_values[":ent"] = entities
+
+    table.update_item(
+        Key={"item_id": item_id},
+        UpdateExpression=update_expr,
+        ExpressionAttributeValues=expr_values,
+        ExpressionAttributeNames=expr_names,
+    )
+    logger.debug("Updated processing results for item %s", item_id)
+
+
 def query_recent(days: int = 30, limit: int = 100) -> list[dict[str, Any]]:
     """Query recently ingested items."""
     table = _get_table()

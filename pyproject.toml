@@ -18,6 +18,7 @@ ml = [
     "mlflow>=2.15.0",
     "torch>=2.0.0",
     "transformers>=4.40.0",
+    "qdrant-client>=1.11.0",
 ]
 app = [
     "streamlit>=1.38.0",
@@ -57,6 +58,14 @@ warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = "feedparser"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "qdrant_client.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sentence_transformers.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

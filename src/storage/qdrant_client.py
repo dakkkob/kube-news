@@ -1,0 +1,86 @@
+"""Qdrant Cloud client for vector storage and similarity search."""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, PointStruct, VectorParams
+
+from src.config import QDRANT_API_KEY, QDRANT_COLLECTION, QDRANT_URL
+from src.processing.embedder import EMBEDDING_DIM
+
+logger = logging.getLogger(__name__)
+
+_client: QdrantClient | None = None
+
+
+def _get_client() -> QdrantClient:
+    global _client  # noqa: PLW0603
+    if _client is None:
+        if not QDRANT_URL:
+            msg = "QDRANT_URL not set"
+            raise ValueError(msg)
+        _client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY or None)
+    return _client
+
+
+def ensure_collection() -> None:
+    """Create the collection if it doesn't exist."""
+    client = _get_client()
+    collections = [c.name for c in client.get_collections().collections]
+    if QDRANT_COLLECTION not in collections:
+        client.create_collection(
+            collection_name=QDRANT_COLLECTION,
+            vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
+        )
+        logger.info("Created Qdrant collection: %s", QDRANT_COLLECTION)
+
+
+def upsert_items(
+    items: list[dict[str, Any]],
+    vectors: list[list[float]],
+) -> int:
+    """Upsert items with their embedding vectors into Qdrant.
+
+    Each item must have 'item_id'. Additional fields are stored as payload.
+    Returns the number of points upserted.
+    """
+    client = _get_client()
+
+    points = []
+    for item, vector in zip(items, vectors, strict=True):
+        payload = {
+            "item_id": item["item_id"],
+            "source": item.get("source", ""),
+            "title": item.get("title", ""),
+            "url": item.get("url", ""),
+            "published_at": item.get("published_at", ""),
+            "label": item.get("label", ""),
+            "s3_key": item.get("s3_key", ""),
+        }
+        points.append(
+            PointStruct(
+                id=hash(item["item_id"]) % (2**63),  # Qdrant needs int or UUID
+                vector=vector,
+                payload=payload,
+            )
+        )
+
+    if points:
+        client.upsert(collection_name=QDRANT_COLLECTION, points=points)
+        logger.info("Upserted %d points to Qdrant collection %s", len(points), QDRANT_COLLECTION)
+
+    return len(points)
+
+
+def search(query_vector: list[float], limit: int = 10) -> list[dict[str, Any]]:
+    """Search for similar items by vector. Returns list of payloads with scores."""
+    client = _get_client()
+    results = client.query_points(
+        collection_name=QDRANT_COLLECTION,
+        query=query_vector,
+        limit=limit,
+    )
+    return [{**(point.payload or {}), "score": point.score} for point in results.points]
