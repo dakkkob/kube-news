@@ -49,6 +49,10 @@ def classify_text(text: str, threshold: float = 0.3) -> dict[str, Any]:
     response.raise_for_status()
     result = response.json()
 
+    # API may return a dict or a list wrapping the dict
+    if isinstance(result, list):
+        result = result[0] if result else {}
+
     labels: list[str] = result.get("labels", [])
     scores: list[float] = result.get("scores", [])
     all_scores = dict(zip(labels, scores, strict=False))
