@@ -11,7 +11,7 @@ from src.config import HF_API_TOKEN
 
 logger = logging.getLogger(__name__)
 
-HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
+HF_API_URL = "https://router.huggingface.co/hf-inference/models/facebook/bart-large-mnli"
 
 CANDIDATE_LABELS = [
     "deprecation",

@@ -5,5 +5,10 @@ prefect_api_url = "https://api.prefect.cloud/api/accounts/YOUR_ACCOUNT/workspace
 prefect_api_key = "pnu_your_key_here"
 github_token    = "ghp_your_token_here"
 
+# Phase 2 — Processing
+hf_api_token   = "hf_your_token_here"
+qdrant_url     = "https://your-cluster.cloud.qdrant.io:6333"
+qdrant_api_key = "your_qdrant_api_key_here"
+
 # Uncomment if you want GitHub Actions OIDC
 # github_org = "your-github-username"
