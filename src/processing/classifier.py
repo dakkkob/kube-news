@@ -49,16 +49,19 @@ def classify_text(text: str, threshold: float = 0.3) -> dict[str, Any]:
     response.raise_for_status()
     result = response.json()
 
-    # API may return a dict or a list wrapping the dict
+    # New API returns: [{"label": "x", "score": 0.9}, ...] sorted by score desc
+    # Old API returned: {"labels": [...], "scores": [...]}
     if isinstance(result, list):
-        result = result[0] if result else {}
-
-    labels: list[str] = result.get("labels", [])
-    scores: list[float] = result.get("scores", [])
-    all_scores = dict(zip(labels, scores, strict=False))
-
-    top_label = labels[0] if labels else "unknown"
-    top_score = scores[0] if scores else 0.0
+        all_scores = {item["label"]: item["score"] for item in result}
+        sorted_items = sorted(result, key=lambda x: x["score"], reverse=True)
+        top_label = sorted_items[0]["label"] if sorted_items else "unknown"
+        top_score = sorted_items[0]["score"] if sorted_items else 0.0
+    else:
+        labels: list[str] = result.get("labels", [])
+        scores: list[float] = result.get("scores", [])
+        all_scores = dict(zip(labels, scores, strict=False))
+        top_label = labels[0] if labels else "unknown"
+        top_score = scores[0] if scores else 0.0
 
     # Map "end of life" back to "eol" for consistency
     if top_label == "end of life":

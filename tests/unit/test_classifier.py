@@ -7,12 +7,17 @@ from src.processing.classifier import classify_batch, classify_text
 
 @patch("src.processing.classifier.HF_API_TOKEN", "fake-token")
 @patch("src.processing.classifier.httpx.post")
-def test_classify_text_deprecation(mock_post):
+def test_classify_text_deprecation_new_format(mock_post):
+    """Test with new HF API format: list of {label, score} dicts."""
     mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "labels": ["deprecation", "feature", "release", "security", "blog", "end of life"],
-        "scores": [0.85, 0.05, 0.04, 0.03, 0.02, 0.01],
-    }
+    mock_response.json.return_value = [
+        {"label": "deprecation", "score": 0.85},
+        {"label": "feature", "score": 0.05},
+        {"label": "release", "score": 0.04},
+        {"label": "security", "score": 0.03},
+        {"label": "blog", "score": 0.02},
+        {"label": "end of life", "score": 0.01},
+    ]
     mock_response.raise_for_status = MagicMock()
     mock_post.return_value = mock_response
 
@@ -24,12 +29,29 @@ def test_classify_text_deprecation(mock_post):
 
 @patch("src.processing.classifier.HF_API_TOKEN", "fake-token")
 @patch("src.processing.classifier.httpx.post")
-def test_classify_text_below_threshold(mock_post):
+def test_classify_text_old_format(mock_post):
+    """Test with old HF API format: {labels: [...], scores: [...]}."""
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "labels": ["blog", "feature"],
-        "scores": [0.2, 0.15],
+        "labels": ["deprecation", "feature"],
+        "scores": [0.85, 0.05],
     }
+    mock_response.raise_for_status = MagicMock()
+    mock_post.return_value = mock_response
+
+    result = classify_text("PodSecurityPolicy is deprecated in Kubernetes 1.25")
+    assert result["label"] == "deprecation"
+    assert result["confidence"] == 0.85
+
+
+@patch("src.processing.classifier.HF_API_TOKEN", "fake-token")
+@patch("src.processing.classifier.httpx.post")
+def test_classify_text_below_threshold(mock_post):
+    mock_response = MagicMock()
+    mock_response.json.return_value = [
+        {"label": "blog", "score": 0.2},
+        {"label": "feature", "score": 0.15},
+    ]
     mock_response.raise_for_status = MagicMock()
     mock_post.return_value = mock_response
 
@@ -41,10 +63,10 @@ def test_classify_text_below_threshold(mock_post):
 @patch("src.processing.classifier.httpx.post")
 def test_classify_text_eol_mapping(mock_post):
     mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "labels": ["end of life", "deprecation"],
-        "scores": [0.9, 0.05],
-    }
+    mock_response.json.return_value = [
+        {"label": "end of life", "score": 0.9},
+        {"label": "deprecation", "score": 0.05},
+    ]
     mock_response.raise_for_status = MagicMock()
     mock_post.return_value = mock_response
 
@@ -68,10 +90,10 @@ def test_classify_text_no_token():
 @patch("src.processing.classifier.httpx.post")
 def test_classify_batch(mock_post):
     mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "labels": ["security", "feature"],
-        "scores": [0.9, 0.05],
-    }
+    mock_response.json.return_value = [
+        {"label": "security", "score": 0.9},
+        {"label": "feature", "score": 0.05},
+    ]
     mock_response.raise_for_status = MagicMock()
     mock_post.return_value = mock_response
 
