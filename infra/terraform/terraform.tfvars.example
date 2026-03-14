@@ -10,5 +10,10 @@ hf_api_token   = "hf_your_token_here"
 qdrant_url     = "https://your-cluster.cloud.qdrant.io:6333"
 qdrant_api_key = "your_qdrant_api_key_here"
 
+# Phase 2 — MLflow on DagsHub
+mlflow_tracking_uri      = "https://dagshub.com/your-user/kube-news.mlflow"
+mlflow_tracking_username = "your-dagshub-username"
+mlflow_tracking_password = "your-dagshub-token"
+
 # Uncomment if you want GitHub Actions OIDC
 # github_org = "your-github-username"

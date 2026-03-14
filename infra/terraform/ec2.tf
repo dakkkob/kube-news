@@ -84,8 +84,11 @@ resource "aws_instance" "worker" {
     s3_bucket       = aws_s3_bucket.raw.id
     dynamodb_table  = aws_dynamodb_table.main.name
     hf_api_token    = var.hf_api_token
-    qdrant_url      = var.qdrant_url
-    qdrant_api_key  = var.qdrant_api_key
+    qdrant_url              = var.qdrant_url
+    qdrant_api_key          = var.qdrant_api_key
+    mlflow_tracking_uri      = var.mlflow_tracking_uri
+    mlflow_tracking_username = var.mlflow_tracking_username
+    mlflow_tracking_password = var.mlflow_tracking_password
   })
 
   root_block_device {

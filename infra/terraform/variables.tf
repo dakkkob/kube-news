@@ -62,3 +62,25 @@ variable "qdrant_api_key" {
   sensitive   = true
   default     = ""
 }
+
+# MLflow on DagsHub
+variable "mlflow_tracking_uri" {
+  description = "MLflow tracking URI (DagsHub)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "mlflow_tracking_username" {
+  description = "MLflow / DagsHub username"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "mlflow_tracking_password" {
+  description = "MLflow / DagsHub token"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

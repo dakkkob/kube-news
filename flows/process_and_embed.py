@@ -6,6 +6,7 @@ import logging
 
 from prefect import flow, task
 
+from src.mlops.mlflow_tracker import log_classification_batch
 from src.processing.classifier import classify_text
 from src.processing.embedder import embed_batch
 from src.processing.entity_extractor import extract_entities
@@ -141,6 +142,12 @@ def process_and_embed(limit: int = 100) -> dict[str, int]:
 
     upserted = embed_and_upsert(items)
     updated = update_dynamo_labels(items)
+
+    # Log metrics to MLflow (best-effort, never blocks pipeline)
+    try:
+        log_classification_batch(items, batch_size=BATCH_SIZE, upserted=upserted)
+    except Exception:
+        logger.warning("MLflow logging failed, continuing", exc_info=True)
 
     print(f"Processing complete: {updated} classified, {upserted} upserted to Qdrant")
     return {"processed": updated, "upserted": upserted}

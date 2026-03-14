@@ -37,6 +37,9 @@ PREFECT_API_KEY=${prefect_api_key}
 HF_API_TOKEN=${hf_api_token}
 QDRANT_URL=${qdrant_url}
 QDRANT_API_KEY=${qdrant_api_key}
+MLFLOW_TRACKING_URI=${mlflow_tracking_uri}
+MLFLOW_TRACKING_USERNAME=${mlflow_tracking_username}
+MLFLOW_TRACKING_PASSWORD=${mlflow_tracking_password}
 ENVEOF
 
 chown kubenews:kubenews /home/kubenews/app/.env
