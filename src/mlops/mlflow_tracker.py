@@ -77,6 +77,4 @@ def log_classification_batch(
         mlflow.set_tag("sources", ", ".join(sorted(sources)))
         mlflow.set_tag("pipeline", "process-and-embed")
 
-    logger.info(
-        "Logged MLflow run: %d items, %.2f avg confidence", len(items), avg_confidence
-    )
+    logger.info("Logged MLflow run: %d items, %.2f avg confidence", len(items), avg_confidence)
