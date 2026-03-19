@@ -42,8 +42,13 @@ gh repo create kube-news --public --source=. --push
 3. Create an IAM user for local dev:
    - IAM Console → Users → Create user
    - Name: `kube-news-dev`
-   - Attach policies: `AmazonS3FullAccess`, `AmazonDynamoDBFullAccess`
+   - Attach policies for **day-to-day use**: `AmazonS3FullAccess`, `AmazonDynamoDBFullAccess`, `AmazonEC2FullAccess`
    - Security credentials → Create access key → CLI use case
+
+   **Before running `terraform apply`**, temporarily add these policies and remove them after:
+   - `IAMFullAccess` (creates Lambda/EC2 IAM roles)
+   - `AWSLambda_FullAccess` (creates Lambda functions)
+   - `AmazonEventBridgeFullAccess` (creates scheduled rules)
 4. Configure locally:
    ```bash
    aws configure
@@ -68,14 +73,19 @@ gh repo create kube-news --public --source=. --push
    prefect cloud login -k YOUR_API_KEY
    ```
 
-### Phase 2 keys (not needed yet)
-
-These are for later — skip them for now:
+### Phase 2 keys (processing + ML)
 
 - **HuggingFace**: https://huggingface.co/settings/tokens (free, for zero-shot classifier)
+  - Enable "Make calls to the serverless Inference API" permission
 - **Qdrant Cloud**: https://cloud.qdrant.io/ (free 1GB cluster)
-- **DagsHub/MLflow**: https://dagshub.com/ (sign up with GitHub, get token from Settings)
-- **OpenAI** (Phase 3): https://platform.openai.com/api-keys
+  - Create a cluster, get the URL and API key from the dashboard
+- **DagsHub/MLflow**: https://dagshub.com/ (sign up with GitHub)
+  - Create/connect a repo, get token from Settings → Tokens
+  - Tracking URI: `https://dagshub.com/<username>/kube-news.mlflow`
+
+### Phase 3 keys (not needed yet)
+
+- **OpenAI**: https://platform.openai.com/api-keys (for RAG chat)
 
 ---
 
@@ -116,7 +126,7 @@ ruff check src/ tests/
 # Type check
 mypy src/
 
-# Tests (18 should pass)
+# Tests (42 should pass)
 pytest -v
 ```
 
@@ -137,14 +147,16 @@ terraform init
 # Preview what will be created
 terraform plan
 
-# Deploy (creates S3, DynamoDB, EC2, IAM)
+# Deploy (creates S3, DynamoDB, EC2, Lambda, EventBridge, IAM)
 terraform apply
 ```
 
 This creates:
 - S3 bucket: `kube-news-raw` (stores raw JSON items)
-- DynamoDB table: `kube-news` (metadata + dedup)
-- EC2 t2.micro: Prefect worker (auto-starts via systemd)
+- DynamoDB tables: `kube-news` (metadata + dedup), `kube-news-drift-metrics` (Phase 4)
+- EC2 t3.micro: Prefect worker (auto-starts via systemd, 2GB swap for ML deps)
+- Lambda: `kube-news-ec2-scheduler` (starts/stops EC2 on schedule)
+- EventBridge rules: start EC2 at 05:50 UTC, stop at 08:00 UTC (Mon/Wed/Fri)
 - IAM instance profile: EC2 accesses S3/DynamoDB without access keys
 - IAM role for GitHub Actions OIDC (no long-lived keys in CI)
 
@@ -173,21 +185,26 @@ print(f'Got {len(items)} CVEs')
 
 ---
 
-## 7. Deploy Prefect flows
+## 7. Prefect flows
 
+Flows run via `serve()` on EC2 (no work pools needed — Prefect free tier). The systemd
+service starts `flows/serve_all.py` on boot automatically.
+
+Schedule (Mon/Wed/Fri UTC, EC2 is started/stopped by Lambda):
+- `06:00` — `ingest-github-releases`
+- `06:15` — `ingest-rss-feeds`
+- `06:30` — `ingest-k8s-cves`
+- `06:45` — `ingest-endoflife`
+- `07:15` — `process-and-embed` (classify, extract entities, embed to Qdrant, log to MLflow)
+
+To run flows manually on EC2:
 ```bash
-# Create the work pool in Prefect Cloud first
-prefect work-pool create kube-news-pool --type process
-
-# Deploy all 4 flows (reads prefect.yaml)
-prefect deploy --all
+aws ssm start-session --target INSTANCE_ID --region eu-north-1
+sudo su - kubenews
+cd ~/app && source .venv/bin/activate
+export $(grep -v '^#' .env | xargs)
+python flows/process_and_embed.py
 ```
-
-This registers the flows with Prefect Cloud on their schedules:
-- `ingest-github-releases` — daily at 06:00 UTC
-- `ingest-rss-feeds` — daily at 07:00 UTC
-- `ingest-k8s-cves` — every 6 hours
-- `ingest-endoflife` — daily at 08:00 UTC
 
 ---
 
