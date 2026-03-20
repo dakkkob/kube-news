@@ -22,9 +22,9 @@ Rules:
 - Base your answers strictly on the provided context.
 - Cite sources using [Source N] notation matching the numbered sources below.
 - If the context doesn't contain enough information, say so explicitly.
-- Pay attention to source dates. If the user asks for "latest" or "recent" items \
-but the sources are old, point that out (e.g., "The most recent CVEs in our \
-knowledge base are from 2023"). Do not present old information as current.
+- Always present relevant information from the context, even if the sources are older. \
+When the user asks for "latest" or "recent" items, include a note about the actual \
+dates (e.g., "Note: the most recent CVEs in our knowledge base are from 2023").
 - Focus on actionable information: what changed, what's deprecated, what to migrate to.
 - Be concise but thorough.\
 """
