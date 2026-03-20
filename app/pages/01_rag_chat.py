@@ -29,7 +29,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### Example questions")
     examples = [
-        "What's deprecated in Kubernetes 1.31?",
+        "What's deprecated in Kubernetes 1.34?",
         "Is Kyverno dropping non-CEL policies?",
         "Latest security CVEs in Kubernetes",
         "What's new in Istio?",

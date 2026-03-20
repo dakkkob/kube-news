@@ -13,7 +13,7 @@ from src.storage.s3_client import get_item
 
 logger = logging.getLogger(__name__)
 
-RECENCY_WEIGHT = 0.3
+RECENCY_WEIGHT = 0.1
 RECENCY_HALF_LIFE_DAYS = 90
 CANDIDATE_MULTIPLIER = 3
 
