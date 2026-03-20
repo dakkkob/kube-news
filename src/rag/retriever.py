@@ -63,16 +63,18 @@ def retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
         recency = _recency_score(published_at)
         combined = similarity * (1 - RECENCY_WEIGHT) + recency * RECENCY_WEIGHT
 
-        results.append({
-            "item_id": hit.get("item_id", ""),
-            "source": hit.get("source", ""),
-            "title": hit.get("title", ""),
-            "url": hit.get("url", ""),
-            "published_at": published_at,
-            "label": hit.get("label", ""),
-            "score": round(combined, 4),
-            "body": body,
-        })
+        results.append(
+            {
+                "item_id": hit.get("item_id", ""),
+                "source": hit.get("source", ""),
+                "title": hit.get("title", ""),
+                "url": hit.get("url", ""),
+                "published_at": published_at,
+                "label": hit.get("label", ""),
+                "score": round(combined, 4),
+                "body": body,
+            }
+        )
 
     results.sort(key=lambda r: r["score"], reverse=True)
     return results[:top_k]

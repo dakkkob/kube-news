@@ -14,9 +14,11 @@ load_dotenv(Path(_project_root) / ".env")
 
 import streamlit as st  # noqa: E402
 
+_favicon = str(Path(__file__).parent / "static" / "favicon.svg")
+
 st.set_page_config(
     page_title="kube-news",
-    page_icon="\u2638\ufe0f",
+    page_icon=_favicon,
     layout="wide",
     initial_sidebar_state="expanded",
 )

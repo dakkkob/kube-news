@@ -76,3 +76,46 @@ resource "aws_iam_role_policy_attachment" "github_actions_pipeline" {
   role       = aws_iam_role.github_actions[0].name
   policy_arn = aws_iam_policy.pipeline_access.arn
 }
+
+# Read-only IAM user for Streamlit Cloud
+resource "aws_iam_user" "streamlit" {
+  name = "${var.project_name}-streamlit"
+}
+
+resource "aws_iam_policy" "streamlit_readonly" {
+  name = "${var.project_name}-streamlit-readonly"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+        ]
+        Resource = "${aws_s3_bucket.raw.arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+        ]
+        Resource = [
+          aws_dynamodb_table.main.arn,
+          "${aws_dynamodb_table.main.arn}/index/*",
+        ]
+      },
+    ]
+  })
+}
+
+resource "aws_iam_user_policy_attachment" "streamlit_readonly" {
+  user       = aws_iam_user.streamlit.name
+  policy_arn = aws_iam_policy.streamlit_readonly.arn
+}
+
+resource "aws_iam_access_key" "streamlit" {
+  user = aws_iam_user.streamlit.name
+}

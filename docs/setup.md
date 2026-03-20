@@ -42,10 +42,11 @@ gh repo create kube-news --public --source=. --push
 3. Create an IAM user for local dev:
    - IAM Console → Users → Create user
    - Name: `kube-news-dev`
-   - Attach policies for **day-to-day use**: `AmazonS3FullAccess`, `AmazonDynamoDBFullAccess`, `AmazonEC2FullAccess`
+   - Attach policies for **day-to-day use**: `AmazonS3FullAccess`, `AmazonDynamoDBFullAccess`, `AmazonSSMFullAccess`
    - Security credentials → Create access key → CLI use case
 
-   **Before running `terraform apply`**, temporarily add these policies and remove them after:
+   **Before running `terraform apply`**, temporarily add these policies (via the console or an admin user) and remove them after:
+   - `AmazonEC2FullAccess` (creates EC2 instances)
    - `IAMFullAccess` (creates Lambda/EC2 IAM roles)
    - `AWSLambda_FullAccess` (creates Lambda functions)
    - `AmazonEventBridgeFullAccess` (creates scheduled rules)
@@ -83,9 +84,9 @@ gh repo create kube-news --public --source=. --push
   - Create/connect a repo, get token from Settings → Tokens
   - Tracking URI: `https://dagshub.com/<username>/kube-news.mlflow`
 
-### Phase 3 keys (not needed yet)
+### Phase 3 keys (RAG chat + Streamlit app)
 
-- **OpenAI**: https://platform.openai.com/api-keys (for RAG chat)
+- **OpenAI**: https://platform.openai.com/api-keys (for RAG chat via `gpt-4o-mini`)
 
 ---
 
@@ -98,8 +99,10 @@ cd kube-news
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install dependencies
-pip install -e ".[dev]"
+# Install dependencies (pick what you need)
+pip install -e ".[dev]"          # linting, testing, type checking
+pip install -e ".[ml]"           # Phase 2: classifier, embedder, Qdrant, MLflow
+pip install -e ".[app]"          # Phase 3: Streamlit, OpenAI, RAG chat
 
 # Create your .env from the template
 cp .env.example .env
@@ -107,7 +110,7 @@ cp .env.example .env
 #   GITHUB_TOKEN=github_pat_...
 #   PREFECT_API_URL=https://api.prefect.cloud/...
 #   PREFECT_API_KEY=pnu_...
-#   AWS_REGION=eu-west-1
+#   AWS_REGION=eu-north-1
 #   S3_BUCKET=kube-news-raw
 #   DYNAMODB_TABLE=kube-news
 ```
@@ -126,7 +129,6 @@ ruff check src/ tests/
 # Type check
 mypy src/
 
-# Tests (42 should pass)
 pytest -v
 ```
 
@@ -159,6 +161,7 @@ This creates:
 - EventBridge rules: start EC2 at 05:50 UTC, stop at 08:00 UTC (Mon/Wed/Fri)
 - IAM instance profile: EC2 accesses S3/DynamoDB without access keys
 - IAM role for GitHub Actions OIDC (no long-lived keys in CI)
+- IAM user: `kube-news-streamlit` with read-only S3/DynamoDB access (for Streamlit Cloud)
 
 ---
 
@@ -197,7 +200,7 @@ Schedule (Mon/Wed/Fri UTC, EC2 is started/stopped by Lambda):
 - `06:45` — `ingest-endoflife`
 - `07:15` — `process-and-embed` (classify, extract entities, embed to Qdrant, log to MLflow)
 
-To run flows manually on EC2:
+To run flows manually on EC2 (requires `AmazonSSMFullAccess` on your `kube-news-dev` user):
 ```bash
 aws ssm start-session --target INSTANCE_ID --region eu-north-1
 sudo su - kubenews
@@ -226,10 +229,46 @@ sudo cat /var/log/kube-news-setup.log
 
 ---
 
+## 9. Deploy to Streamlit Community Cloud
+
+1. Push your code to GitHub (the `app/` directory must be in the repo)
+2. Go to https://share.streamlit.io and connect your `dakkkob/kube-news` repo
+3. Set **Main file path** to `app/streamlit_app.py`
+4. In app **Settings → Secrets**, paste the credentials in TOML format:
+   ```toml
+   OPENAI_API_KEY = "sk-..."
+   QDRANT_URL = "https://your-cluster.qdrant.io"
+   QDRANT_API_KEY = "..."
+   AWS_ACCESS_KEY_ID = "..."       # Use kube-news-streamlit keys (read-only)
+   AWS_SECRET_ACCESS_KEY = "..."   # NOT your kube-news-dev keys
+   AWS_DEFAULT_REGION = "eu-north-1"
+   S3_BUCKET = "kube-news-raw"
+   DYNAMODB_TABLE = "kube-news"
+   QDRANT_COLLECTION = "kube-news"
+   HF_TOKEN = "hf_..."             # Same token as HF_API_TOKEN — faster model downloads
+   ```
+
+   Get the Streamlit IAM credentials after `terraform apply` (outputs are hidden by default):
+   ```bash
+   terraform output -raw streamlit_aws_access_key_id
+   terraform output -raw streamlit_aws_secret_access_key
+   ```
+
+5. Click **Deploy**
+
+> The `kube-news-streamlit` IAM user can only read from S3 and query DynamoDB — no
+> writes, no deletes, no access to other AWS services. Even if Streamlit Cloud were
+> compromised, the blast radius is minimal.
+
+---
+
 ## Security notes
 
 - `.env` is in `.gitignore` — never committed
 - `.env.example` has only placeholder values — safe to commit
 - GitHub Actions uses OIDC (temporary credentials) — no AWS keys stored in repo
 - The GitHub token only needs **public repo read** access
+- Streamlit Cloud uses a dedicated read-only IAM user (`kube-news-streamlit`) — not your dev keys
+- Streamlit secrets are encrypted at rest and only visible to the app owner
+- EC2 uses an IAM instance profile — no access keys on the instance
 - Making the repo public exposes zero secrets

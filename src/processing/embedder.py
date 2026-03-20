@@ -13,18 +13,29 @@ logger = logging.getLogger(__name__)
 MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384
 
-_model: SentenceTransformer | None = None
+
+def _load_model() -> SentenceTransformer:
+    """Load the embedding model (downloads ~80MB on first use)."""
+    from sentence_transformers import SentenceTransformer
+
+    logger.info("Loading embedding model: %s", MODEL_NAME)
+    return SentenceTransformer(MODEL_NAME)
 
 
-def _get_model() -> SentenceTransformer:
-    """Lazy-load the model (downloads ~80MB on first use)."""
-    global _model  # noqa: PLW0603
-    if _model is None:
-        from sentence_transformers import SentenceTransformer
+# Use st.cache_resource when running inside Streamlit (persists across reruns),
+# otherwise fall back to a simple module-level singleton.
+try:
+    import streamlit as st
 
-        logger.info("Loading embedding model: %s", MODEL_NAME)
-        _model = SentenceTransformer(MODEL_NAME)
-    return _model
+    _get_model = st.cache_resource(show_spinner="Loading embedding model...")(_load_model)
+except (ImportError, RuntimeError):
+    _model: SentenceTransformer | None = None
+
+    def _get_model() -> SentenceTransformer:  # type: ignore[misc]
+        global _model  # noqa: PLW0603
+        if _model is None:
+            _model = _load_model()
+        return _model
 
 
 def embed_text(text: str) -> list[float]:

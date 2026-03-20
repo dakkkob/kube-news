@@ -21,3 +21,13 @@ output "ec2_instance_id" {
 output "ec2_instance_public_ip" {
   value = aws_instance.worker.public_ip
 }
+
+output "streamlit_aws_access_key_id" {
+  value     = aws_iam_access_key.streamlit.id
+  sensitive = true
+}
+
+output "streamlit_aws_secret_access_key" {
+  value     = aws_iam_access_key.streamlit.secret
+  sensitive = true
+}
