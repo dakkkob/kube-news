@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 MODEL_NAME = "distilbert-base-uncased"
 MAX_LENGTH = 256
-MIN_SAMPLES = 200
+MIN_SAMPLES = 100
 
 LABEL_NAMES = ["deprecation", "security", "feature", "release", "blog", "eol"]
 LABEL2ID = {name: i for i, name in enumerate(LABEL_NAMES)}
@@ -59,8 +59,8 @@ ID2LABEL = {i: name for i, name in enumerate(LABEL_NAMES)}
 
 def _load_training_data() -> tuple[list[str], list[int]]:
     """Fetch silver-labeled items from DynamoDB + S3."""
-    logger.info("Fetching classified items from DynamoDB (confidence > 0.15)...")
-    items = query_classified_items(days=365, min_confidence=0.15, limit=5000)
+    logger.info("Fetching classified items from DynamoDB (all labeled)...")
+    items = query_classified_items(days=365, min_confidence=0.0, limit=5000)
     logger.info("Found %d candidate items", len(items))
 
     texts: list[str] = []
