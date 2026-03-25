@@ -59,6 +59,7 @@ python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = "feedparser"
@@ -74,6 +75,18 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "mlflow"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "numpy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "torch.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "transformers.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
