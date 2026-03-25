@@ -105,6 +105,7 @@ resource "aws_iam_policy" "streamlit_readonly" {
         Resource = [
           aws_dynamodb_table.main.arn,
           "${aws_dynamodb_table.main.arn}/index/*",
+          aws_dynamodb_table.drift_metrics.arn,
         ]
       },
     ]

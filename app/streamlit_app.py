@@ -31,7 +31,7 @@ st.markdown(
 
 st.markdown("---")
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("### \U0001f4ac RAG Chat")
@@ -49,13 +49,19 @@ with col2:
     )
     st.page_link("pages/02_deprecation_alerts.py", label="View Alerts", icon="\u26a0\ufe0f")
 
+col3, col4 = st.columns(2)
+
 with col3:
     st.markdown("### \U0001f4f0 Recent Updates")
     st.markdown(
-        "Latest releases, blog posts, and news from across "
-        "the Kubernetes ecosystem timeline."
+        "Latest releases, blog posts, and news from across the Kubernetes ecosystem timeline."
     )
     st.page_link("pages/03_recent_updates.py", label="Browse Updates", icon="\U0001f4f0")
+
+with col4:
+    st.markdown("### \U0001f4ca MLOps Dashboard")
+    st.markdown("Monitor classifier drift, model health, and label distribution over time.")
+    st.page_link("pages/04_mlops_dashboard.py", label="View Dashboard", icon="\U0001f4ca")
 
 st.sidebar.markdown("---")
 st.sidebar.caption(

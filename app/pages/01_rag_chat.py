@@ -90,15 +90,19 @@ if query:
                             f"`{src['source']}` | {date} | relevance: {score}"
                         )
 
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": answer,
-                "sources": sources,
-            })
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": answer,
+                    "sources": sources,
+                }
+            )
 
         except Exception as e:
             st.error(f"Error: {e}")
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": f"Error: {e}",
-            })
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"Error: {e}",
+                }
+            )

@@ -9,9 +9,7 @@ import streamlit as st  # noqa: E402
 
 from src.storage.dynamodb_client import query_by_source, query_recent  # noqa: E402
 
-st.set_page_config(
-    page_title="Recent Updates | kube-news", page_icon="\U0001f4f0", layout="wide"
-)
+st.set_page_config(page_title="Recent Updates | kube-news", page_icon="\U0001f4f0", layout="wide")
 
 st.title("\U0001f4f0 Recent Updates")
 st.caption("Latest releases, blog posts, and news across the Kubernetes ecosystem.")
