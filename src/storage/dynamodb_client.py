@@ -9,7 +9,7 @@ from typing import Any
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
-from src.config import AWS_REGION, DYNAMODB_TABLE
+from src.config import AWS_REGION, DRIFT_METRICS_TABLE, DYNAMODB_TABLE
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,11 @@ logger = logging.getLogger(__name__)
 def _get_table() -> Any:
     dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
     return dynamodb.Table(DYNAMODB_TABLE)
+
+
+def _get_drift_table() -> Any:
+    dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+    return dynamodb.Table(DRIFT_METRICS_TABLE)
 
 
 def item_exists(item_id: str) -> bool:
@@ -159,4 +164,91 @@ def query_recent(days: int = 30, limit: int = 100) -> list[dict[str, Any]]:
     )
     items: list[dict[str, Any]] = response.get("Items", [])
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
+    return items
+
+
+# ---------------------------------------------------------------------------
+# Drift metrics table
+# ---------------------------------------------------------------------------
+
+
+def save_drift_metric(check_type: str, timestamp: str, metrics: dict[str, Any]) -> None:
+    """Save a drift check result to the drift-metrics table."""
+    table = _get_drift_table()
+    item: dict[str, Any] = {
+        "check_type": check_type,
+        "timestamp": timestamp,
+        **{k: str(v) if isinstance(v, (float, int, bool)) else v for k, v in metrics.items()},
+    }
+    table.put_item(Item=item)
+    logger.debug("Saved drift metric: %s @ %s", check_type, timestamp)
+
+
+def query_drift_metrics(check_type: str, limit: int = 30) -> list[dict[str, Any]]:
+    """Query drift metrics by check_type, most recent first."""
+    table = _get_drift_table()
+    response = table.query(
+        KeyConditionExpression=Key("check_type").eq(check_type),
+        ScanIndexForward=False,
+        Limit=limit,
+    )
+    result: list[dict[str, Any]] = response.get("Items", [])
+    return result
+
+
+def get_drift_baseline(check_type: str) -> dict[str, Any] | None:
+    """Get the stored baseline for a given check type."""
+    table = _get_drift_table()
+    response = table.get_item(
+        Key={"check_type": f"{check_type}_baseline", "timestamp": "baseline"},
+    )
+    item: dict[str, Any] | None = response.get("Item")
+    return item
+
+
+def save_drift_baseline(check_type: str, baseline: dict[str, Any]) -> None:
+    """Save or overwrite a drift baseline."""
+    table = _get_drift_table()
+    item: dict[str, Any] = {
+        "check_type": f"{check_type}_baseline",
+        "timestamp": "baseline",
+        **{k: str(v) if isinstance(v, (float, int, bool)) else v for k, v in baseline.items()},
+    }
+    table.put_item(Item=item)
+    logger.debug("Saved drift baseline: %s", check_type)
+
+
+def query_classified_items(
+    days: int = 7,
+    min_confidence: float = 0.0,
+    limit: int = 500,
+) -> list[dict[str, Any]]:
+    """Query items classified within the last N days.
+
+    Returns items with a non-empty label and confidence above min_confidence.
+    Paginates through the full scan to collect up to *limit* results.
+    """
+    from datetime import timedelta
+
+    table = _get_table()
+    cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
+
+    filter_expr = Attr("label").exists() & Attr("label").ne("") & Attr("fetched_at").gte(cutoff)
+
+    items: list[dict[str, Any]] = []
+    scan_kwargs: dict[str, Any] = {"FilterExpression": filter_expr}
+
+    while len(items) < limit:
+        response = table.scan(**scan_kwargs)
+        batch: list[dict[str, Any]] = response.get("Items", [])
+        for item in batch:
+            conf = float(item.get("confidence", "0") or "0")
+            if conf >= min_confidence:
+                items.append(item)
+                if len(items) >= limit:
+                    break
+        if "LastEvaluatedKey" not in response:
+            break
+        scan_kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
+
     return items

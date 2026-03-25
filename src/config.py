@@ -80,3 +80,8 @@ MLFLOW_TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", "")
 MLFLOW_TRACKING_USERNAME = os.environ.get("MLFLOW_TRACKING_USERNAME", "")
 MLFLOW_TRACKING_PASSWORD = os.environ.get("MLFLOW_TRACKING_PASSWORD", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+# Phase 4: MLOps
+CLASSIFIER_MODEL_PATH = os.environ.get("CLASSIFIER_MODEL_PATH", "")
+DRIFT_METRICS_TABLE = os.environ.get("DRIFT_METRICS_TABLE", "kube-news-drift-metrics")
+CLASSIFIER_S3_PREFIX = os.environ.get("CLASSIFIER_S3_PREFIX", "models/classifier/")

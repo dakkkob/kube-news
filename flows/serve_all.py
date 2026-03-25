@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from prefect import serve  # noqa: E402
 
+from flows.drift_check import drift_check  # noqa: E402
 from flows.ingest_cves import ingest_k8s_cves  # noqa: E402
 from flows.ingest_eol import ingest_endoflife  # noqa: E402
 from flows.ingest_github import ingest_github_releases  # noqa: E402
@@ -37,4 +38,9 @@ if __name__ == "__main__":
         cron="15 7 * * 1,3,5",  # 30 min after last ingestion starts
     )
 
-    serve(github_deploy, rss_deploy, cve_deploy, eol_deploy, process_deploy)
+    drift_deploy = drift_check.to_deployment(
+        name="drift-check",
+        cron="45 7 * * 1,3,5",  # After process-and-embed finishes (~7:30)
+    )
+
+    serve(github_deploy, rss_deploy, cve_deploy, eol_deploy, process_deploy, drift_deploy)

@@ -84,3 +84,28 @@ def search(query_vector: list[float], limit: int = 10) -> list[dict[str, Any]]:
         limit=limit,
     )
     return [{**(point.payload or {}), "score": point.score} for point in results.points]
+
+
+def scroll_vectors(limit: int = 500) -> list[list[float]]:
+    """Scroll the collection and return raw vectors (for drift analysis)."""
+    client = _get_client()
+    vectors: list[list[float]] = []
+    offset = None
+
+    while len(vectors) < limit:
+        batch_size = min(100, limit - len(vectors))
+        results, next_offset = client.scroll(
+            collection_name=QDRANT_COLLECTION,
+            limit=batch_size,
+            offset=offset,
+            with_vectors=True,
+            order_by="published_at",
+        )
+        for point in results:
+            if point.vector and isinstance(point.vector, list):
+                vectors.append(point.vector)  # type: ignore[arg-type]
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    return vectors
