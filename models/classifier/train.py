@@ -59,8 +59,8 @@ ID2LABEL = {i: name for i, name in enumerate(LABEL_NAMES)}
 
 def _load_training_data() -> tuple[list[str], list[int]]:
     """Fetch silver-labeled items from DynamoDB + S3."""
-    logger.info("Fetching classified items from DynamoDB (confidence > 0.5)...")
-    items = query_classified_items(days=365, min_confidence=0.5, limit=5000)
+    logger.info("Fetching classified items from DynamoDB (confidence > 0.15)...")
+    items = query_classified_items(days=365, min_confidence=0.15, limit=5000)
     logger.info("Found %d candidate items", len(items))
 
     texts: list[str] = []
