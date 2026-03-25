@@ -243,7 +243,8 @@ def train() -> None:
     predictions = trainer.predict(val_dataset)
     pred_labels = np.argmax(predictions.predictions, axis=-1)
     report = classification_report(
-        val_labels, pred_labels, target_names=LABEL_NAMES, zero_division=0
+        val_labels, pred_labels, labels=list(range(len(LABEL_NAMES))),
+        target_names=LABEL_NAMES, zero_division=0,
     )
     logger.info("Classification report:\n%s", report)
 
