@@ -61,7 +61,7 @@ with st.spinner("Loading confidence metrics..."):
                 data=chart_data,
                 x="timestamp",
                 y=["Current Avg", "Baseline"],
-                use_container_width=True,
+                width="stretch",
             )
 
             # Show latest status
@@ -103,7 +103,7 @@ with st.spinner("Loading PSI metrics..."):
                 data=chart_data,
                 x="timestamp",
                 y=["PSI", "Threshold"],
-                use_container_width=True,
+                width="stretch",
             )
 
             latest = psi_metrics[0]
@@ -136,7 +136,7 @@ with st.spinner("Loading classified items..."):
             labels_sorted = sorted(label_counts.items(), key=lambda x: x[1], reverse=True)
 
             chart_data = [{"Label": label, "Count": count} for label, count in labels_sorted]
-            st.bar_chart(data=chart_data, x="Label", y="Count", use_container_width=True)
+            st.bar_chart(data=chart_data, x="Label", y="Count", width="stretch")
 
             # Summary stats
             total = len(items)

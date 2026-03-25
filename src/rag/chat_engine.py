@@ -77,7 +77,7 @@ def chat(
     client = OpenAI(api_key=OPENAI_API_KEY)
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=messages,
+        messages=messages,  # type: ignore[arg-type]
         temperature=0.3,
         max_tokens=1024,
     )

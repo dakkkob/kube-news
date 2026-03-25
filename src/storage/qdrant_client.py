@@ -102,8 +102,9 @@ def scroll_vectors(limit: int = 500) -> list[list[float]]:
             order_by="published_at",
         )
         for point in results:
-            if point.vector and isinstance(point.vector, list):
-                vectors.append(point.vector)  # type: ignore[arg-type]
+            vec = point.vector
+            if vec and isinstance(vec, list) and all(isinstance(v, float) for v in vec):
+                vectors.append(vec)  # type: ignore[arg-type]
         if next_offset is None:
             break
         offset = next_offset
