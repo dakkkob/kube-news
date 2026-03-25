@@ -38,6 +38,7 @@ dev = [
     "boto3-stubs[s3,dynamodb]>=1.35.0",
     "moto[s3,dynamodb]>=5.0.0",
     "types-PyYAML>=6.0.0",
+    "numpy>=1.24.0",
 ]
 
 [tool.hatch.build.targets.wheel]
