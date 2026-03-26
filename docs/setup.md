@@ -199,6 +199,7 @@ Schedule (Mon/Wed/Fri UTC, EC2 is started/stopped by Lambda):
 - `06:30` — `ingest-k8s-cves`
 - `06:45` — `ingest-endoflife`
 - `07:15` — `process-and-embed` (classify, extract entities, embed to Qdrant, log to MLflow)
+- `07:45` — `drift-check` (confidence + embedding drift, triggers retraining if drifted)
 
 To run flows manually on EC2 (requires `AmazonSSMFullAccess` on your `kube-news-dev` user):
 ```bash
@@ -245,7 +246,9 @@ sudo cat /var/log/kube-news-setup.log
    S3_BUCKET = "kube-news-raw"
    DYNAMODB_TABLE = "kube-news"
    QDRANT_COLLECTION = "kube-news"
-   HF_TOKEN = "hf_..."             # Same token as HF_API_TOKEN — faster model downloads
+   HF_API_TOKEN = "hf_..."         # Zero-shot classifier fallback
+   HF_TOKEN = "hf_..."             # Same value — used by transformers library for model downloads
+   DRIFT_METRICS_TABLE = "kube-news-drift-metrics"
    ```
 
    Get the Streamlit IAM credentials after `terraform apply` (outputs are hidden by default):
@@ -259,6 +262,23 @@ sudo cat /var/log/kube-news-setup.log
 > The `kube-news-streamlit` IAM user can only read from S3 and query DynamoDB — no
 > writes, no deletes, no access to other AWS services. Even if Streamlit Cloud were
 > compromised, the blast radius is minimal.
+
+---
+
+## 10. GitHub Actions (automated retraining)
+
+The retraining workflow triggers automatically when drift is detected, or manually.
+
+1. **Enable PR creation:** Settings → Actions → General → check **"Allow GitHub Actions to create and approve pull requests"**
+2. **Add repository secrets** (Settings → Secrets and variables → Actions):
+   - `AWS_ROLE_ARN` — from `terraform output -raw github_actions_role_arn`
+   - `MLFLOW_TRACKING_URI` — `https://dagshub.com/<username>/kube-news.mlflow`
+   - `MLFLOW_TRACKING_USERNAME` — your DagsHub username
+   - `MLFLOW_TRACKING_PASSWORD` — your DagsHub token
+3. **Manual trigger:** `gh workflow run retrain-classifier.yml`
+4. **Automated trigger:** The drift-check flow sends a `repository_dispatch` event when drift is detected
+
+The workflow trains a DistilBERT classifier on silver labels, uploads to S3, and opens a PR with metrics. Merge the PR to promote the model.
 
 ---
 
