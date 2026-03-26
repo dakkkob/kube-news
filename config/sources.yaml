@@ -36,30 +36,56 @@ github_repos:
     schedule: daily
     description: "Certificate management — API changes"
 
-  - owner: argoproj
-    repo: argo-cd
+  # Tier 3 — Extended CNCF
+  - owner: helmfile
+    repo: helmfile
     schedule: daily
-    description: "GitOps — workflow and API changes"
-
-  - owner: cilium
-    repo: cilium
-    schedule: daily
-    description: "CNI/eBPF networking updates"
+    description: "Declarative Helm chart deployments"
 
   - owner: kubernetes-sigs
-    repo: gateway-api
+    repo: kustomize
     schedule: daily
-    description: "Ingress replacement — channel graduations"
+    description: "Template-free K8s config customization"
 
-  - owner: open-policy-agent
-    repo: gatekeeper
+  - owner: kubernetes-sigs
+    repo: karpenter
     schedule: daily
-    description: "Policy engine — compare with Kyverno"
+    description: "Node autoscaler — key for EKS upgrades"
 
-  - owner: crossplane
-    repo: crossplane
+  - owner: aquasecurity
+    repo: trivy
     schedule: daily
-    description: "Infrastructure-as-code on K8s"
+    description: "Container and K8s vulnerability scanner"
+
+  - owner: falcosecurity
+    repo: falco
+    schedule: daily
+    description: "Runtime security — CNCF graduated"
+
+  - owner: prometheus
+    repo: prometheus
+    schedule: daily
+    description: "Monitoring and alerting — CNCF graduated"
+
+  - owner: etcd-io
+    repo: etcd
+    schedule: daily
+    description: "K8s backing store — critical for cluster upgrades"
+
+  - owner: containerd
+    repo: containerd
+    schedule: daily
+    description: "Container runtime — CNCF graduated"
+
+  - owner: google
+    repo: cel-spec
+    schedule: weekly
+    description: "CEL language spec — tracks CEL adoption in K8s"
+
+  - owner: envoyproxy
+    repo: envoy
+    schedule: daily
+    description: "Proxy underpinning Istio and Gateway API"
 
 rss_feeds:
   # Tier 1 — Core
@@ -84,7 +110,28 @@ rss_feeds:
     schedule: weekly
     description: "Kyverno blog — CEL migration guides"
 
-  # Tier 3 — Aggregators
+  # Tier 3 — Ecosystem & practitioner blogs
+  - url: "https://marcincuber.medium.com/feed"
+    name: marcin-cuber
+    schedule: weekly
+    description: "Marcin Cuber — detailed EKS upgrade guides"
+
+  - url: "https://aws.amazon.com/blogs/containers/feed/"
+    name: aws-containers
+    schedule: daily
+    description: "AWS Containers blog — EKS, ECS, Fargate"
+
+  - url: "https://helm.sh/blog/index.xml"
+    name: helm-blog
+    schedule: weekly
+    description: "Helm project blog — releases, deprecations"
+
+  - url: "https://falco.org/feed.xml"
+    name: falco-blog
+    schedule: weekly
+    description: "Falco runtime security blog"
+
+  # Tier 4 — Aggregators
   - url: "https://www.cncf.io/feed/?post_type=lf_kubeweekly"
     name: kubeweekly
     schedule: weekly
@@ -104,13 +151,19 @@ cve_feeds:
 endoflife_products:
   - product: kubernetes
     schedule: daily
-  - product: cilium
-    schedule: daily
-  - product: argo-cd
-    schedule: daily
   - product: amazon-eks
     schedule: daily
   - product: google-kubernetes-engine
+    schedule: daily
+  - product: istio
+    schedule: daily
+  - product: cert-manager
+    schedule: daily
+  - product: kyverno
+    schedule: daily
+  - product: envoy
+    schedule: daily
+  - product: etcd
     schedule: daily
 
 artifact_hub:
