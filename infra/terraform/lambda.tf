@@ -92,11 +92,11 @@ resource "aws_lambda_permission" "start_worker" {
   source_arn    = aws_cloudwatch_event_rule.start_worker.arn
 }
 
-# EventBridge: Stop EC2 at 08:00 UTC Mon/Wed/Fri
+# EventBridge: Stop EC2 at 07:00 UTC Mon/Wed/Fri
 resource "aws_cloudwatch_event_rule" "stop_worker" {
   name                = "${var.project_name}-stop-worker"
   description         = "Stop EC2 worker after pipeline completes"
-  schedule_expression = "cron(0 8 ? * MON,WED,FRI *)"
+  schedule_expression = "cron(0 7 ? * MON,WED,FRI *)"
 }
 
 resource "aws_cloudwatch_event_target" "stop_worker" {

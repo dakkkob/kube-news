@@ -193,13 +193,10 @@ print(f'Got {len(items)} CVEs')
 Flows run via `serve()` on EC2 (no work pools needed — Prefect free tier). The systemd
 service starts `flows/serve_all.py` on boot automatically.
 
-Schedule (Mon/Wed/Fri UTC, EC2 is started/stopped by Lambda):
-- `06:00` — `ingest-github-releases`
-- `06:15` — `ingest-rss-feeds`
-- `06:30` — `ingest-k8s-cves`
-- `06:45` — `ingest-endoflife`
-- `07:15` — `process-and-embed` (classify, extract entities, embed to Qdrant, log to MLflow)
-- `07:45` — `drift-check` (confidence + embedding drift, triggers retraining if drifted)
+Schedule (Mon/Wed/Fri UTC, EC2 starts 05:50, stops 07:00):
+- `06:00` — `ingest-all` (GitHub releases, RSS feeds, CVEs, end-of-life — runs sequentially)
+- `06:30` — `process-and-embed` (classify, extract entities, embed to Qdrant, log to MLflow)
+- `06:50` — `drift-check` (confidence + embedding drift, triggers retraining if drifted)
 
 To run flows manually on EC2 (requires `AmazonSSMFullAccess` on your `kube-news-dev` user):
 ```bash
