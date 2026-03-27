@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 RECENCY_WEIGHT = 0.1
 RECENCY_HALF_LIFE_DAYS = 90
 CANDIDATE_MULTIPLIER = 3
+MIN_RELEVANCE_SCORE = 0.3
 
 
 def _recency_score(published_at: str) -> float:
@@ -48,7 +49,14 @@ def retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
     hits = qdrant_search(query_vector, limit=top_k * CANDIDATE_MULTIPLIER)
 
     results = []
+    seen_ids: set[str] = set()
     for hit in hits:
+        # Dedup by item_id (same item may have multiple vectors in Qdrant)
+        item_id = hit.get("item_id", "")
+        if item_id in seen_ids:
+            continue
+        seen_ids.add(item_id)
+
         s3_key = hit.get("s3_key", "")
         body = ""
         if s3_key:
@@ -65,7 +73,7 @@ def retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
 
         results.append(
             {
-                "item_id": hit.get("item_id", ""),
+                "item_id": item_id,
                 "source": hit.get("source", ""),
                 "title": hit.get("title", ""),
                 "url": hit.get("url", ""),
@@ -77,4 +85,6 @@ def retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
         )
 
     results.sort(key=lambda r: r["score"], reverse=True)
+    # Filter out low-relevance noise
+    results = [r for r in results if r["score"] >= MIN_RELEVANCE_SCORE]
     return results[:top_k]
