@@ -156,7 +156,7 @@ terraform apply
 This creates:
 - S3 bucket: `kube-news-raw` (stores raw JSON items)
 - DynamoDB tables: `kube-news` (metadata + dedup), `kube-news-drift-metrics` (Phase 4)
-- EC2 t3.micro: Prefect worker (auto-starts via systemd, 2GB swap for ML deps)
+- EC2 t3.small: Prefect worker (auto-starts via systemd, 2GB swap for ML inference)
 - Lambda: `kube-news-ec2-scheduler` (starts/stops EC2 on schedule)
 - EventBridge rules: start EC2 at 05:50 UTC, stop at 08:00 UTC (Mon/Wed/Fri)
 - IAM instance profile: EC2 accesses S3/DynamoDB without access keys

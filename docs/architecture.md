@@ -267,7 +267,7 @@ kube-news-raw/
 | Layer | Technology | Tier |
 |-------|-----------|------|
 | Orchestration | Prefect Cloud (serve mode) | Free |
-| Compute | EC2 t3.micro (eu-north-1) | Free tier |
+| Compute | EC2 t3.small (eu-north-1) | ~$0.40/mo |
 | Object Storage | S3 | Free tier |
 | Database | DynamoDB (single-table + drift-metrics) | Free tier |
 | Vector DB | Qdrant Cloud | Free (1 GB) |

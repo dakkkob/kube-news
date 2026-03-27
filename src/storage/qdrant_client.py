@@ -99,7 +99,6 @@ def scroll_vectors(limit: int = 500) -> list[list[float]]:
             limit=batch_size,
             offset=offset,
             with_vectors=True,
-            order_by="published_at",
         )
         for point in results:
             vec = point.vector

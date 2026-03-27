@@ -6,7 +6,7 @@ exec > /var/log/kube-news-setup.log 2>&1
 
 echo "=== kube-news worker setup ==="
 
-# Add 2GB swap — t3.micro has only 1GB RAM, pip needs more for large wheels
+# Add 2GB swap — t3.small has 2GB RAM, swap helps with large ML model inference
 fallocate -l 2G /swapfile
 chmod 600 /swapfile
 mkswap /swapfile
