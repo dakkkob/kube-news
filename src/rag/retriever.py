@@ -14,9 +14,29 @@ from src.storage.s3_client import get_item
 logger = logging.getLogger(__name__)
 
 RECENCY_WEIGHT = 0.1
+RECENCY_WEIGHT_BOOSTED = 0.4
 RECENCY_HALF_LIFE_DAYS = 90
-CANDIDATE_MULTIPLIER = 3
+CANDIDATE_MULTIPLIER = 4
 MIN_RELEVANCE_SCORE = 0.3
+
+_RECENCY_KEYWORDS = frozenset({
+    "latest", "recent", "newest", "new", "current",
+    "today", "this week", "this month", "last week", "last month",
+})
+
+
+def _is_recency_sensitive(query: str) -> bool:
+    """Check if a query is asking for recent/latest information."""
+    query_lower = query.lower()
+    return any(kw in query_lower for kw in _RECENCY_KEYWORDS)
+
+
+def _expand_query(query: str) -> str:
+    """Light query expansion for better embedding matching."""
+    q = query.strip()
+    if len(q.split()) <= 3:
+        q = f"Kubernetes {q}"
+    return q
 
 
 def _recency_score(published_at: str) -> float:
@@ -45,8 +65,10 @@ def retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
     Returns a list of dicts with keys: item_id, source, title, url,
     published_at, label, score, body.
     """
-    query_vector = embed_text(query)
+    expanded = _expand_query(query)
+    query_vector = embed_text(expanded)
     hits = qdrant_search(query_vector, limit=top_k * CANDIDATE_MULTIPLIER)
+    recency_weight = RECENCY_WEIGHT_BOOSTED if _is_recency_sensitive(query) else RECENCY_WEIGHT
 
     results = []
     seen_ids: set[str] = set()
@@ -69,7 +91,7 @@ def retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
         published_at = hit.get("published_at", "")
         similarity = hit.get("score", 0.0)
         recency = _recency_score(published_at)
-        combined = similarity * (1 - RECENCY_WEIGHT) + recency * RECENCY_WEIGHT
+        combined = similarity * (1 - recency_weight) + recency * recency_weight
 
         results.append(
             {

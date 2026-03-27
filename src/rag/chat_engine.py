@@ -8,7 +8,7 @@ from typing import Any
 from openai import OpenAI
 
 from src.config import OPENAI_API_KEY
-from src.processing.text_cleaner import clean_text
+from src.processing.text_cleaner import extract_relevant_snippet
 from src.rag.retriever import retrieve
 
 logger = logging.getLogger(__name__)
@@ -29,15 +29,15 @@ dates (e.g., "Note: the most recent CVEs in our knowledge base are from 2023").
 - Be concise but thorough.\
 """
 
-MAX_CONTEXT_CHARS = 6000
+MAX_CONTEXT_CHARS = 12000
 
 
-def _build_context(results: list[dict[str, Any]]) -> str:
+def _build_context(results: list[dict[str, Any]], query: str) -> str:
     """Format retrieved results into numbered context blocks."""
     blocks = []
     budget = MAX_CONTEXT_CHARS
     for i, r in enumerate(results, 1):
-        body = clean_text(r.get("body", ""), max_length=1500)
+        body = extract_relevant_snippet(r.get("body", ""), query, max_length=3000)
         source = r.get("source", "unknown")
         title = r.get("title", "Untitled")
         url = r.get("url", "")
@@ -64,7 +64,7 @@ def chat(
     Returns dict with keys: answer, sources (list of {title, url, source, score}).
     """
     results = retrieve(query, top_k=top_k)
-    context = _build_context(results)
+    context = _build_context(results, query)
 
     messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
