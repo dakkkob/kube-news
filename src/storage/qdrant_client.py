@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import Any
 
@@ -35,7 +36,7 @@ def _get_client() -> QdrantClient:
 
 
 def ensure_collection() -> None:
-    """Create the collection (and payload indexes) if it doesn't exist."""
+    """Create the collection (and payload indexes) if they don't exist."""
     client = _get_client()
     collections = [c.name for c in client.get_collections().collections]
     if QDRANT_COLLECTION not in collections:
@@ -45,13 +46,19 @@ def ensure_collection() -> None:
         )
         logger.info("Created Qdrant collection: %s", QDRANT_COLLECTION)
 
-    # Ensure keyword indexes exist for filtered search
+    ensure_indexes()
+
+
+def ensure_indexes() -> None:
+    """Create keyword payload indexes for filtered search (idempotent)."""
+    client = _get_client()
     for field in ("source", "label"):
-        client.create_payload_index(
-            collection_name=QDRANT_COLLECTION,
-            field_name=field,
-            field_schema=PayloadSchemaType.KEYWORD,
-        )
+        with contextlib.suppress(Exception):
+            client.create_payload_index(
+                collection_name=QDRANT_COLLECTION,
+                field_name=field,
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
     logger.info("Ensured payload indexes on source, label")
 
 

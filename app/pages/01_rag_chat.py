@@ -5,11 +5,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+import contextlib  # noqa: E402
+
 import streamlit as st  # noqa: E402
 
 from src.rag.chat_engine import chat  # noqa: E402
+from src.storage.qdrant_client import ensure_indexes  # noqa: E402
 
 st.set_page_config(page_title="RAG Chat | kube-news", page_icon="\U0001f4ac", layout="wide")
+
+# Create Qdrant payload indexes if they don't exist (idempotent, runs once)
+if "qdrant_indexes_ready" not in st.session_state:
+    with contextlib.suppress(Exception):
+        ensure_indexes()
+    st.session_state.qdrant_indexes_ready = True
 
 st.title("\U0001f4ac Kubernetes Knowledge Chat")
 st.caption("Ask anything about Kubernetes releases, deprecations, security, and CNCF projects.")

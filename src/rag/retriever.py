@@ -133,17 +133,20 @@ def retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
     # Hybrid: intent-filtered search to pull in relevant source types
     intent = _detect_intent(query)
     if intent:
-        filtered_hits = qdrant_search(
-            query_vector,
-            limit=FILTERED_CANDIDATES,
-            sources=intent.get("sources"),
-            label=intent.get("label"),
-        )
-        # Merge — primary hits take priority, filtered fills gaps
-        seen_in_primary = {h.get("item_id") for h in hits}
-        for fh in filtered_hits:
-            if fh.get("item_id") not in seen_in_primary:
-                hits.append(fh)
+        try:
+            filtered_hits = qdrant_search(
+                query_vector,
+                limit=FILTERED_CANDIDATES,
+                sources=intent.get("sources"),
+                label=intent.get("label"),
+            )
+            # Merge — primary hits take priority, filtered fills gaps
+            seen_in_primary = {h.get("item_id") for h in hits}
+            for fh in filtered_hits:
+                if fh.get("item_id") not in seen_in_primary:
+                    hits.append(fh)
+        except Exception:
+            logger.warning("Filtered search failed (missing index?), using semantic only")
 
     results = []
     seen_ids: set[str] = set()
