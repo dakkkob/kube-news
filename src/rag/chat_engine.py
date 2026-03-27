@@ -32,6 +32,28 @@ dates (e.g., "Note: the most recent CVEs in our knowledge base are from 2023").
 MAX_CONTEXT_CHARS = 12000
 
 
+def _format_metadata(result: dict[str, Any]) -> str:
+    """Build a metadata line from structured fields (for thin-body items)."""
+    parts = []
+    if result.get("label"):
+        parts.append(f"Category: {result['label']}")
+    if result.get("cve_id"):
+        parts.append(f"CVE: {result['cve_id']}")
+    if result.get("tag"):
+        parts.append(f"Version: {result['tag']}")
+    if result.get("cycle"):
+        parts.append(f"Cycle: {result['cycle']}")
+    if result.get("latest_version"):
+        parts.append(f"Latest: {result['latest_version']}")
+    if result.get("eol_date"):
+        parts.append(f"EOL: {result['eol_date']}")
+    if result.get("is_eol") is True:
+        parts.append("Status: End of Life")
+    if result.get("lts") is True:
+        parts.append("LTS: Yes")
+    return " | ".join(parts)
+
+
 def _build_context(results: list[dict[str, Any]], query: str) -> str:
     """Format retrieved results into numbered context blocks."""
     blocks = []
@@ -43,7 +65,14 @@ def _build_context(results: list[dict[str, Any]], query: str) -> str:
         url = r.get("url", "")
         date = r.get("published_at", "")[:10]
 
-        block = f"[Source {i}] {title}\nFrom: {source} | Date: {date}\nURL: {url}\n{body}"
+        header = f"[Source {i}] {title}\nFrom: {source} | Date: {date}\nURL: {url}"
+
+        # Add structured metadata — especially useful when body is thin
+        meta = _format_metadata(r)
+        if meta:
+            header += f"\n{meta}"
+
+        block = f"{header}\n{body}" if body else header
         if len(block) > budget:
             block = block[:budget]
         blocks.append(block)

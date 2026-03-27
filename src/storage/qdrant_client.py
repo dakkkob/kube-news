@@ -6,7 +6,14 @@ import logging
 from typing import Any
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointStruct,
+    VectorParams,
+)
 
 from src.config import QDRANT_API_KEY, QDRANT_COLLECTION, QDRANT_URL
 from src.processing.embedder import EMBEDDING_DIM
@@ -75,12 +82,31 @@ def upsert_items(
     return len(points)
 
 
-def search(query_vector: list[float], limit: int = 10) -> list[dict[str, Any]]:
-    """Search for similar items by vector. Returns list of payloads with scores."""
+def search(
+    query_vector: list[float],
+    limit: int = 10,
+    sources: list[str] | None = None,
+    label: str | None = None,
+) -> list[dict[str, Any]]:
+    """Search for similar items by vector, optionally filtered by source or label.
+
+    When both sources and label are given, items matching *any* condition are
+    returned (OR / ``should`` logic).
+    """
     client = _get_client()
+
+    conditions: list[FieldCondition | Filter] = []
+    if sources:
+        for src in sources:
+            conditions.append(FieldCondition(key="source", match=MatchValue(value=src)))
+    if label:
+        conditions.append(FieldCondition(key="label", match=MatchValue(value=label)))
+    query_filter = Filter(should=conditions) if conditions else None  # type: ignore[arg-type]
+
     results = client.query_points(
         collection_name=QDRANT_COLLECTION,
         query=query_vector,
+        query_filter=query_filter,
         limit=limit,
     )
     return [{**(point.payload or {}), "score": point.score} for point in results.points]
