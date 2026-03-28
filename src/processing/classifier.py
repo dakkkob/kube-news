@@ -9,7 +9,7 @@ from typing import Any
 
 import httpx
 
-from src.config import HF_API_TOKEN
+from src.config import HF_API_TOKEN, USE_LOCAL_CLASSIFIER
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +182,7 @@ def classify_text(text: str, threshold: float = 0.3) -> dict[str, Any]:
     if not text.strip():
         return {"label": "unknown", "confidence": 0.0, "all_scores": {}}
 
-    if _has_local_model():
+    if USE_LOCAL_CLASSIFIER and _has_local_model():
         return _classify_local(text, threshold)
 
     return _classify_zero_shot(text, threshold)

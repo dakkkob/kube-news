@@ -85,3 +85,4 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 CLASSIFIER_MODEL_PATH = os.environ.get("CLASSIFIER_MODEL_PATH", "")
 DRIFT_METRICS_TABLE = os.environ.get("DRIFT_METRICS_TABLE", "kube-news-drift-metrics")
 CLASSIFIER_S3_PREFIX = os.environ.get("CLASSIFIER_S3_PREFIX", "models/classifier/")
+USE_LOCAL_CLASSIFIER = os.environ.get("USE_LOCAL_CLASSIFIER", "true").lower() == "true"
