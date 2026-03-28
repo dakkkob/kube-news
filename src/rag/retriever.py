@@ -40,17 +40,27 @@ _INTENT_FILTERS: list[dict[str, Any]] = [
     {
         "keywords": ["cve", "vulnerability", "vulnerabilities", "security advisory"],
         "sources": ["cve/kubernetes"],
-        "label": "security",
+        "label": None,
     },
     {
         "keywords": ["deprecated", "deprecation", "removed", "eol", "end of life", "end-of-life"],
-        "sources": None,
-        "label": "deprecation",
+        "sources": [
+            "rss/kubernetes-blog",
+            "rss/lwkd",
+            "eol/kubernetes",
+            "eol/amazon-eks",
+        ],
+        "label": None,
     },
     {
         "keywords": ["security", "patch", "fixes"],
         "sources": ["cve/kubernetes"],
-        "label": "security",
+        "label": None,
+    },
+    {
+        "keywords": ["kyverno", "cel policy", "cel policies"],
+        "sources": ["rss/kyverno-blog", "eol/kyverno"],
+        "label": None,
     },
 ]
 
