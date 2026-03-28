@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import logging
 from typing import Any
 
@@ -86,7 +87,7 @@ def upsert_items(
         }
         points.append(
             PointStruct(
-                id=hash(item["item_id"]) % (2**63),  # Qdrant needs int or UUID
+                id=int(hashlib.sha256(item["item_id"].encode()).hexdigest()[:16], 16),
                 vector=vector,
                 payload=payload,
             )

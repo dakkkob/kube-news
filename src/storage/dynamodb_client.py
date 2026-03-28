@@ -112,14 +112,24 @@ def query_security(limit: int = 50) -> list[dict[str, Any]]:
 
 
 def query_unprocessed(limit: int = 100) -> list[dict[str, Any]]:
-    """Query items that haven't been classified yet (label is empty)."""
+    """Query items that haven't been classified yet (label is empty).
+
+    Paginates the full table scan to avoid the DynamoDB Limit gotcha
+    (Limit caps items *evaluated*, not items *matched*).
+    """
     table = _get_table()
-    response = table.scan(
-        FilterExpression=Attr("label").eq("") | Attr("label").not_exists(),
-        Limit=limit,
-    )
-    items: list[dict[str, Any]] = response.get("Items", [])
-    return items
+    filter_expr = Attr("label").eq("") | Attr("label").not_exists()
+    items: list[dict[str, Any]] = []
+    scan_kwargs: dict[str, Any] = {"FilterExpression": filter_expr}
+
+    while len(items) < limit:
+        response = table.scan(**scan_kwargs)
+        items.extend(response.get("Items", []))
+        if "LastEvaluatedKey" not in response:
+            break
+        scan_kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
+
+    return items[:limit]
 
 
 def update_processing_results(
