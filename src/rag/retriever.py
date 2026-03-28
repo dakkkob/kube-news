@@ -59,7 +59,7 @@ _INTENT_FILTERS: list[dict[str, Any]] = [
     },
     {
         "keywords": ["kyverno", "cel policy", "cel policies"],
-        "sources": ["rss/kyverno-blog", "eol/kyverno"],
+        "sources": ["eol/kyverno"],
         "label": None,
     },
 ]

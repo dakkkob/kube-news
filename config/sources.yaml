@@ -105,10 +105,8 @@ rss_feeds:
     schedule: daily
     description: "Istio-specific advisories and releases"
 
-  - url: "https://kyverno.io/blog/index.xml"
-    name: kyverno-blog
-    schedule: weekly
-    description: "Kyverno blog — CEL migration guides"
+  # Kyverno blog — feed removed (site migrated to Astro, no RSS anymore)
+  # Kyverno releases still tracked via github/kyverno/kyverno
 
   # Tier 3 — Ecosystem & practitioner blogs
   - url: "https://marcincuber.medium.com/feed"
