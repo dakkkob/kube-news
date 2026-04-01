@@ -158,6 +158,30 @@
          on next process-and-embed run
 ```
 
+#### Drift detection explained
+
+Both checks monitor the **DistilBERT classifier** — the only model we own and retrain.
+The other models (all-MiniLM-L6-v2 for embeddings, gpt-4o-mini for RAG) are third-party
+and static.
+
+**Confidence drift** — "Is the model's output degrading?"
+
+Measures whether the classifier's average confidence is dropping. If the baseline
+average was 0.75 and this week it drops to 0.60 (delta > 0.05 threshold), the model
+is seeing content it wasn't trained on — like a weather forecaster trained on European
+weather being asked about monsoons. **Retrain because the model is struggling.**
+
+**Embedding drift (PSI)** — "Has the model's input changed?"
+
+PSI (Population Stability Index) compares the distribution of document embeddings
+against a stored baseline. If new sources introduce content that clusters in different
+areas of embedding space (e.g., adding container runtime articles when the model was
+trained on release notes), PSI goes up. Above 0.2 = significant shift.
+**Retrain because there's new content to learn from.**
+
+Either check exceeding its threshold triggers a `repository_dispatch` event to GitHub,
+which starts the retraining workflow automatically.
+
 ### 5. RAG Chat
 
 ```
