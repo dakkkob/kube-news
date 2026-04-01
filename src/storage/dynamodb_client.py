@@ -108,18 +108,36 @@ def _paginated_scan(filter_expr: Any, limit: int) -> list[dict[str, Any]]:
     return items[:limit]
 
 
-def query_deprecations(limit: int = 50) -> list[dict[str, Any]]:
+def _passes_confidence(item: dict[str, Any], min_confidence: float) -> bool:
+    """Check if item meets confidence threshold.
+
+    Pre-labeled items (from ingestion, not classifier) have empty confidence
+    and should always pass through.
+    """
+    conf_str = item.get("confidence", "") or ""
+    if not conf_str:
+        return True
+    return float(conf_str) >= min_confidence
+
+
+def query_deprecations(
+    limit: int = 50, min_confidence: float = 0.5
+) -> list[dict[str, Any]]:
     """Query items flagged as deprecations, sorted by date."""
-    items = _paginated_scan(Attr("is_deprecation").eq("true"), limit)
+    items = _paginated_scan(Attr("is_deprecation").eq("true"), limit * 2)
+    items = [i for i in items if _passes_confidence(i, min_confidence)]
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
-    return items
+    return items[:limit]
 
 
-def query_security(limit: int = 50) -> list[dict[str, Any]]:
+def query_security(
+    limit: int = 50, min_confidence: float = 0.5
+) -> list[dict[str, Any]]:
     """Query items flagged as security issues."""
-    items = _paginated_scan(Attr("is_security").eq("true"), limit)
+    items = _paginated_scan(Attr("is_security").eq("true"), limit * 2)
+    items = [i for i in items if _passes_confidence(i, min_confidence)]
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
-    return items
+    return items[:limit]
 
 
 def query_unprocessed(limit: int = 100) -> list[dict[str, Any]]:
@@ -160,9 +178,11 @@ def update_processing_results(
 
 
 def query_recent(days: int = 30, limit: int = 100) -> list[dict[str, Any]]:
-    """Query recently ingested items."""
-    cutoff = datetime.now(UTC).isoformat()
-    items = _paginated_scan(Attr("fetched_at").lte(cutoff), limit)
+    """Query items ingested within the last N days."""
+    from datetime import timedelta
+
+    cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
+    items = _paginated_scan(Attr("fetched_at").gte(cutoff), limit)
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
     return items
 

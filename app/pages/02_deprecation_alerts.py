@@ -55,12 +55,9 @@ with tab_dep:
                         with col_meta:
                             st.caption(f"\U0001f4e6 {project}")
                             st.caption(f"\U0001f4c5 {date}")
-                            if confidence:
-                                try:
-                                    conf_pct = float(confidence) * 100
-                                    st.caption(f"Confidence: {conf_pct:.0f}%")
-                                except ValueError:
-                                    pass
+                            source_type = item.get("source_type", "")
+                            if source_type:
+                                st.caption(f"\U0001f3f7\ufe0f {source_type}")
         except Exception as e:
             st.error(f"Failed to load deprecations: {e}")
 
@@ -92,5 +89,8 @@ with tab_sec:
                         with col_meta:
                             st.caption(f"\U0001f4e6 {project}")
                             st.caption(f"\U0001f4c5 {date}")
+                            source_type = item.get("source_type", "")
+                            if source_type:
+                                st.caption(f"\U0001f3f7\ufe0f {source_type}")
         except Exception as e:
             st.error(f"Failed to load security advisories: {e}")

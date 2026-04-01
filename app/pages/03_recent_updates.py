@@ -36,7 +36,6 @@ with st.sidebar:
         "rss/kubeweekly",
         "rss/cncf-blog",
         "rss/istio-news",
-        "rss/kyverno-blog",
         "cve/kubernetes",
         "eol/kubernetes",
     ]
@@ -51,9 +50,18 @@ with st.sidebar:
             format_func=lambda s: friendly[s],
         )
 
+    _LABEL_DISPLAY = {
+        "deprecation": "Deprecation",
+        "security": "Security",
+        "feature": "Feature",
+        "release": "Release",
+        "blog": "Blog",
+        "eol": "End of life",
+    }
     label_filter = st.multiselect(
         "Filter by label",
-        ["deprecation", "security", "feature", "release", "blog", "end of life"],
+        list(_LABEL_DISPLAY.keys()),
+        format_func=lambda lbl: _LABEL_DISPLAY[lbl],
         default=[],
     )
 
@@ -96,7 +104,7 @@ else:
             "feature": ":green[feature]",
             "release": ":blue[release]",
             "blog": ":violet[blog]",
-            "end of life": ":orange[end of life]",
+            "eol": ":orange[end of life]",
         }
         label_display = label_colors.get(label, label) if label else ""
 
