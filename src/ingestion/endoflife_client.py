@@ -56,6 +56,7 @@ def fetch_product_cycles(product: str) -> list[dict[str, Any]]:
             "url": f"https://endoflife.date/{product}",
             "cycle": cycle_name,
             "latest_version": cycle.get("latest", ""),
+            "published_at": cycle.get("releaseDate", ""),
             "release_date": cycle.get("releaseDate", ""),
             "eol_date": eol_date,
             "is_eol": is_eol,

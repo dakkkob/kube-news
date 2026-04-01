@@ -87,38 +87,14 @@ def query_by_source(source: str, limit: int = 100) -> list[dict[str, Any]]:
     return result
 
 
-def query_deprecations(limit: int = 50) -> list[dict[str, Any]]:
-    """Query items flagged as deprecations, sorted by date."""
-    table = _get_table()
-    response = table.scan(
-        FilterExpression=Attr("is_deprecation").eq("true"),
-        Limit=limit,
-    )
-    items: list[dict[str, Any]] = response.get("Items", [])
-    items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
-    return items
+def _paginated_scan(filter_expr: Any, limit: int) -> list[dict[str, Any]]:
+    """Paginate a DynamoDB scan with a FilterExpression.
 
-
-def query_security(limit: int = 50) -> list[dict[str, Any]]:
-    """Query items flagged as security issues."""
-    table = _get_table()
-    response = table.scan(
-        FilterExpression=Attr("is_security").eq("true"),
-        Limit=limit,
-    )
-    items: list[dict[str, Any]] = response.get("Items", [])
-    items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
-    return items
-
-
-def query_unprocessed(limit: int = 100) -> list[dict[str, Any]]:
-    """Query items that haven't been classified yet (label is empty).
-
-    Paginates the full table scan to avoid the DynamoDB Limit gotcha
-    (Limit caps items *evaluated*, not items *matched*).
+    DynamoDB ``Limit`` caps items *evaluated*, not items *matched*.
+    This helper paginates until we have enough matching items or the
+    table is exhausted.
     """
     table = _get_table()
-    filter_expr = Attr("label").eq("") | Attr("label").not_exists()
     items: list[dict[str, Any]] = []
     scan_kwargs: dict[str, Any] = {"FilterExpression": filter_expr}
 
@@ -130,6 +106,25 @@ def query_unprocessed(limit: int = 100) -> list[dict[str, Any]]:
         scan_kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
 
     return items[:limit]
+
+
+def query_deprecations(limit: int = 50) -> list[dict[str, Any]]:
+    """Query items flagged as deprecations, sorted by date."""
+    items = _paginated_scan(Attr("is_deprecation").eq("true"), limit)
+    items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
+    return items
+
+
+def query_security(limit: int = 50) -> list[dict[str, Any]]:
+    """Query items flagged as security issues."""
+    items = _paginated_scan(Attr("is_security").eq("true"), limit)
+    items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
+    return items
+
+
+def query_unprocessed(limit: int = 100) -> list[dict[str, Any]]:
+    """Query items that haven't been classified yet (label is empty)."""
+    return _paginated_scan(Attr("label").eq("") | Attr("label").not_exists(), limit)
 
 
 def update_processing_results(
@@ -166,13 +161,8 @@ def update_processing_results(
 
 def query_recent(days: int = 30, limit: int = 100) -> list[dict[str, Any]]:
     """Query recently ingested items."""
-    table = _get_table()
     cutoff = datetime.now(UTC).isoformat()
-    response = table.scan(
-        FilterExpression=Attr("fetched_at").lte(cutoff),
-        Limit=limit,
-    )
-    items: list[dict[str, Any]] = response.get("Items", [])
+    items = _paginated_scan(Attr("fetched_at").lte(cutoff), limit)
     items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
     return items
 
